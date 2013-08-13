@@ -12,6 +12,7 @@ import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.ArcShape;
 import android.os.Handler;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.animation.OvershootInterpolator;
@@ -56,7 +57,7 @@ public class PieChart extends View implements OnClickListener{
 	@Override
 	public void onClick(View view) {
 		Log.d("tag", "onClick");
-		int arcIndex = getClickedArc();
+		int arcIndex = handleClick(null);
 		
 		for(ArcView arc : arcs){
 			if(arcIndex == arc.getIndex() && !arc.isExpanded()){
@@ -70,19 +71,39 @@ public class PieChart extends View implements OnClickListener{
 		}
 	}
 	
-	private int getClickedArc() {
+	@Override 
+	public boolean onTouchEvent(MotionEvent e){
+		e.getX();
+		e.getY();
+		return false;
+	}
+	
+	private int handleClick(Point loc) {
 		int result = -1;
 		int numArcs = arcs.size();
 		
-		Point center = new Point(x, y);
+		Point center = new Point(x + width/2, y + height/2);
+		int diameter = width/2;
 		
+		int distance = getDistance(loc, center);
+		
+		//point is in the circle
+		if(distance < diameter){
+			//TODO get angle
+		}
+		else{
+			replayAnimation();
+		}
 		
 		return result;
 	}
+	
+	private int getDistance(Point point1, Point point2) {
+		return Math.abs(point1.x - point2.x) + Math.abs(point2.y - point1.y);
+	}
+	
+	
 
-	
-	
-	
 	public void replayAnimation(){
 		for(ArcView arc : arcs){
 			arc.setScale(0);
