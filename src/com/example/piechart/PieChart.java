@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.animation.Animator;
-import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Point;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.ArcShape;
 import android.os.Handler;
@@ -20,16 +20,24 @@ public class PieChart extends View implements OnClickListener{
 	
 	private ArrayList<ArcView> arcs;
 	
+	int x; int y;
+	int width; int height;
+	
 	public PieChart(Context context) {
 		super(context);
-		int width = 300;
-		int height = 300;
-		int x = 0;
-		int y = 0;
+		width = 200;
+		height = 200;
+		x = 100;
+		y = 50;
 		
 		addArcs(width, height, x, y);
+		//this.setOnClickListener(this);
 		
-		this.setOnClickListener(this);
+	}
+	
+	@Override 
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec){
+		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 	}
 	
 	private void addArcs(int width, int height, int x, int y) {
@@ -48,15 +56,43 @@ public class PieChart extends View implements OnClickListener{
 	@Override
 	public void onClick(View view) {
 		Log.d("tag", "onClick");
+		int arcIndex = getClickedArc();
+		
+		for(ArcView arc : arcs){
+			if(arcIndex == arc.getIndex() && !arc.isExpanded()){
+				arc.expand();			
+			}
+			else{
+				if(arc.isExpanded()){
+					arc.deflate();
+				}
+			}
+		}
+	}
+	
+	private int getClickedArc() {
+		int result = -1;
+		int numArcs = arcs.size();
+		
+		Point center = new Point(x, y);
+		
+		
+		return result;
+	}
+
+	
+	
+	
+	public void replayAnimation(){
 		for(ArcView arc : arcs){
 			arc.setScale(0);
 		}
-		openingAnimation(view);
+		openingAnimation();
 	}
 	
-	private void openingAnimation(View view) {
+	private void openingAnimation() {
 		final long ANIMATION_SPEED = 350;
-		final long DELAY = 35;
+		final long DELAY = 25;
 		
 		List<Animator> animations = new ArrayList<Animator>();
 		
@@ -102,6 +138,10 @@ public class PieChart extends View implements OnClickListener{
 		private float sweepAngle;
 		private int index;
 		
+		private boolean expanded;
+		private static final float EXPAND_SCALE = 1.2f;
+		
+		
 		/**determines the size of the arc as a measure
 		 * of how far it extends from the center. 
 		 */
@@ -119,6 +159,10 @@ public class PieChart extends View implements OnClickListener{
 			setCallback(parent);
 		}
 		
+		public int getIndex() {
+			return index;
+		}
+
 		/**Keep the center in the same place, but change size
 		 * of bounding rectangle to change size.
 		 * @param scale the scale
@@ -143,5 +187,25 @@ public class PieChart extends View implements OnClickListener{
 			invalidate();
 		}
 		
+		
+		public void expand(){
+			final long DURATION = 100;
+			ObjectAnimator expandAnim = ObjectAnimator.ofFloat(this, "scale", 1f, EXPAND_SCALE);
+			expandAnim.setDuration(DURATION);
+			expandAnim.start();
+			expanded = true;
+		}
+		
+		public void deflate(){
+			final long DURATION = 100;
+			ObjectAnimator deflateAnim = ObjectAnimator.ofFloat(this, "scale", EXPAND_SCALE, 1f);
+			deflateAnim.setDuration(DURATION);
+			deflateAnim.start();
+			expanded = false;
+		}
+		
+		public boolean isExpanded(){
+			return expanded;
+		}
 	}
 }
