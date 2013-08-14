@@ -14,25 +14,25 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.view.animation.OvershootInterpolator;
 
-public class PieChart extends View implements OnClickListener{
+public class PieChart extends View implements OnTouchListener{
 	
 	private ArrayList<ArcView> arcs;
 	
 	int x; int y;
 	int width; int height;
 	
-	public PieChart(Context context) {
+	public PieChart(Context context, int width, int height, int x, int y) {
 		super(context);
-		width = 200;
-		height = 200;
-		x = 100;
-		y = 50;
+		this.width = width;
+		this.height = height;
+		this.x = x;
+		this.y = y;
 		
 		addArcs(width, height, x, y);
-		//this.setOnClickListener(this);
+		this.setOnTouchListener(this);
 		
 	}
 	
@@ -53,11 +53,15 @@ public class PieChart extends View implements OnClickListener{
 			arc.draw(canvas);
 		}
 	}
-
+	
 	@Override
-	public void onClick(View view) {
-		Log.d("tag", "onClick");
-		int arcIndex = handleClick(null);
+	public boolean onTouch(View arg0, MotionEvent e) {
+		Log.d("tag", "onTouch");
+		
+		int eventY = (int)e.getY();
+		int eventX = (int)e.getX();
+		
+		int arcIndex = whichArcIsThePointIn(new Point(eventY, eventX));
 		
 		for(ArcView arc : arcs){
 			if(arcIndex == arc.getIndex() && !arc.isExpanded()){
@@ -69,39 +73,49 @@ public class PieChart extends View implements OnClickListener{
 				}
 			}
 		}
-	}
-	
-	@Override 
-	public boolean onTouchEvent(MotionEvent e){
-		e.getX();
-		e.getY();
 		return false;
 	}
 	
-	private int handleClick(Point loc) {
+	private int whichArcIsThePointIn(Point loc) {
 		int result = -1;
-		int numArcs = arcs.size();
 		
-		Point center = new Point(x + width/2, y + height/2);
-		int diameter = width/2;
+		Point center = new Point(y + height/2, x + width/2);
+		int radius = width/2;
 		
 		int distance = getDistance(loc, center);
+		Log.d("touch", String.format("Center %s, TouchPoint %s, distance %s, radius %s",
+				center, loc, distance, radius));
 		
 		//point is in the circle
-		if(distance < diameter){
-			//TODO get angle
+		boolean inCircle = distance < radius;
+		Log.d("touch", "Touched in circle: " + inCircle);
+		if(inCircle){
+			double angle = getAngle(center, loc);
+			Log.d("touch", "Angle: " + angle);
+			
+			for(ArcView arc : arcs){
+				//if the angle is within this arc
+				if(angle > arc.getBeginAngle() && angle < (arc.getBeginAngle() + arc.getSweep()) % 360){
+					result = arc.getIndex();
+				}
+			}
 		}
 		else{
 			replayAnimation();
 		}
-		
+		Log.d("touch", "In arc: " + result);
 		return result;
 	}
 	
-	private int getDistance(Point point1, Point point2) {
+	private static int getDistance(Point point1, Point point2) {
 		return Math.abs(point1.x - point2.x) + Math.abs(point2.y - point1.y);
 	}
 	
+	private static double getAngle(Point center, Point point){
+		int xDiff = point.x - center.x;
+		int yDiff = point.y - center.y;
+		return Math.toDegrees(Math.atan2(yDiff, xDiff));
+	}
 	
 
 	public void replayAnimation(){
@@ -228,5 +242,15 @@ public class PieChart extends View implements OnClickListener{
 		public boolean isExpanded(){
 			return expanded;
 		}
+		
+		public float getBeginAngle(){
+			return beginAngle;
+		}
+		
+		public float getSweep(){
+			return sweepAngle;
+		}
 	}
+
+	
 }

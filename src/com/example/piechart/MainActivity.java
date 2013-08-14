@@ -20,8 +20,9 @@ public class MainActivity extends Activity implements OnClickListener{
 		
 		bn.setOnClickListener(this);
 		
-		pc = new PieChart(this);
+		pc = new PieChart(this, 600, 600, 200, 150);
 		container.addView(pc);
+		pc.replayAnimation();
 	}
 
 	@Override
