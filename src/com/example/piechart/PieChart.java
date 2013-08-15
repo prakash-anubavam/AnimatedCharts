@@ -7,6 +7,8 @@ import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.ArcShape;
@@ -23,6 +25,8 @@ public class PieChart extends View implements OnTouchListener{
 	
 	int x; int y;
 	int width; int height;
+	Paint mLinePainter;
+	Point mCenter;
 	
 	public PieChart(Context context, int width, int height, int x, int y) {
 		super(context);
@@ -31,8 +35,13 @@ public class PieChart extends View implements OnTouchListener{
 		this.x = x;
 		this.y = y;
 		
+		mCenter = new Point(x + width/2, y + height/2);
+		
 		addArcs(width, height, x, y);
 		this.setOnTouchListener(this);
+		mLinePainter = new Paint();
+		mLinePainter.setStrokeWidth(4);
+		mLinePainter.setColor(Color.WHITE);
 		
 	}
 	
@@ -52,9 +61,34 @@ public class PieChart extends View implements OnTouchListener{
 		for(ArcView arc : arcs){
 			arc.draw(canvas);
 		}
+		
+		
+		//canvas.drawLine(mCenter.x, mCenter.y, x + width /2, 0, mLinePainter);
+		for(ArcView arc : arcs){
+			float endAngle = arc.getEndAngle();
+			Point endPoint = getEndPoint(mCenter,  endAngle, width/2);
+			
+			//canvas.drawLine(mCenter.x, mCenter.y, endPoint.x, endPoint.y, mLinePainter);
+		}
+	}
+	
+	private Point getEndPoint(Point center, float angle, int radius) {
+		Point result = new Point();
+		
+		double angleRad = Math.toRadians(angle);
+		
+		double sin = Math.sin(angleRad);
+		double cos = Math.cos(angleRad);
+		
+		Log.d("point", String.format("angle %s, sin %s, cos %s", angleRad, sin, cos));
+		
+		int yOffset = (int)(sin * radius);
+		result.y = mCenter.x + yOffset;
+		result.x = mCenter.y + (int)(cos * radius);
+		
+		return result;
 	}
 
-	
 ///////////////////////////////////////////////////////
 //touch
 ///////////////////////////////////////////////////////
@@ -125,10 +159,10 @@ public class PieChart extends View implements OnTouchListener{
 	}
 	
 	/**The angle returned by arctan is not compatible with the angles
-	 * used by the arcs. 0 is at due south (90 degrees on the arc's circle) and it goes counter clockwise
+	 * used by the arcs. 0 is at due south and it goes counter clockwise
 	 * as opposed to clockwise. Also, anything in the 1st and 4th quadrant is a negative angle.
 	 * 
-	 * This method's logic converts the arctan angle into an angle on the arc's circle.
+	 * This method's logic converts the arctan angle into an angle on the arc's circle, 0 at due north.
 	 */
 	private static double convertAngle(double angle){
 		return 180 - angle;
@@ -207,7 +241,6 @@ public class PieChart extends View implements OnTouchListener{
 		 */
 		private float scale = 1;
 		
-		
 		public ArcView(View parent, int x, int y, int height, int width,
 				float beginAngle, float sweepAngle, float scale, int index){
 			super(new ArcShape(beginAngle, sweepAngle));			
@@ -255,6 +288,7 @@ public class PieChart extends View implements OnTouchListener{
 		@Override 
 		public void draw(Canvas canvas){
 			super.draw(canvas);
+			
 			invalidate();
 		}
 		

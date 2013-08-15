@@ -1,6 +1,7 @@
 package com.example.piechart;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
@@ -22,6 +23,7 @@ public class MainActivity extends Activity implements OnClickListener{
 		
 		pc = new PieChart(this, 600, 600, 200, 150);
 		container.addView(pc);
+		container.setBackgroundColor(Color.WHITE);
 		pc.replayAnimation();
 	}
 
