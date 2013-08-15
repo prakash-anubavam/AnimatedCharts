@@ -25,7 +25,10 @@ public class PieChart extends View implements OnTouchListener{
 	
 	int x; int y;
 	int width; int height;
+	
 	Paint mLinePainter;
+	ArrayList<Point> mLineEndPoints;
+
 	Point mCenter;
 	
 	public PieChart(Context context, int width, int height, int x, int y) {
@@ -38,11 +41,27 @@ public class PieChart extends View implements OnTouchListener{
 		mCenter = new Point(x + width/2, y + height/2);
 		
 		addArcs(width, height, x, y);
+	
+		initLineEndPoints(width);
+
 		this.setOnTouchListener(this);
-		mLinePainter = new Paint();
-		mLinePainter.setStrokeWidth(4);
-		mLinePainter.setColor(Color.WHITE);
+	}
+
+	private void initLineEndPoints(int width) {
+		final int STROKE = 4;
 		
+		mLineEndPoints = new ArrayList<Point>();
+		//Add the points that are at the end of the white lines.
+		for(ArcView arc : arcs){
+			float endAngle = arc.getEndAngle();
+			Point endPoint = getEndPoint(mCenter,  endAngle, width/2);
+			mLineEndPoints.add(endPoint);
+		}
+		
+		mLinePainter = new Paint();
+		
+		mLinePainter.setStrokeWidth(STROKE);
+		mLinePainter.setColor(Color.WHITE);
 	}
 	
 	@Override 
@@ -62,29 +81,32 @@ public class PieChart extends View implements OnTouchListener{
 			arc.draw(canvas);
 		}
 		
-		
-		//canvas.drawLine(mCenter.x, mCenter.y, x + width /2, 0, mLinePainter);
-		for(ArcView arc : arcs){
-			float endAngle = arc.getEndAngle();
-			Point endPoint = getEndPoint(mCenter,  endAngle, width/2);
-			
-			//canvas.drawLine(mCenter.x, mCenter.y, endPoint.x, endPoint.y, mLinePainter);
+		//Draw white lines
+		for(Point endPoint : mLineEndPoints){
+			//Log.d("point", mCenter.toString() + " " + endPoint.toString());
+			canvas.drawLine(mCenter.x, mCenter.y, endPoint.x, endPoint.y, mLinePainter);
 		}
 	}
 	
 	private Point getEndPoint(Point center, float angle, int radius) {
 		Point result = new Point();
 		
-		double angleRad = Math.toRadians(angle);
+		radius = (int)(radius * ArcView.EXPAND_SCALE);
+		
+		//angle on our circle is different from trig angle
+		double fixedAngle = -(450 - angle);
+		
+		double angleRad = Math.toRadians(fixedAngle);
 		
 		double sin = Math.sin(angleRad);
 		double cos = Math.cos(angleRad);
 		
-		Log.d("point", String.format("angle %s, sin %s, cos %s", angleRad, sin, cos));
+		Log.d("point", String.format("angleRad %s, angleDeg %s, angleFixed %s" +
+				" sin %s, cos %s", angleRad, angle, fixedAngle, sin, cos));
 		
 		int yOffset = (int)(sin * radius);
-		result.y = mCenter.x + yOffset;
-		result.x = mCenter.y + (int)(cos * radius);
+		result.y = mCenter.y + yOffset;
+		result.x = mCenter.x + (int)(cos * radius);
 		
 		return result;
 	}
