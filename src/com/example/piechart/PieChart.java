@@ -43,9 +43,9 @@ public class PieChart extends View implements OnTouchListener{
 	
 	private void addArcs(int width, int height, int x, int y) {
 		arcs = new ArrayList<ArcView>(); 
-		arcs.add(new ArcView(this, x, y, width, height, -90, 165, 0f, 0));
-		arcs.add(new ArcView(this, x, y, width, height, 75, 135, 0f, 1));
-		arcs.add(new ArcView(this, x, y, width, height, 210, 60, 0f, 2));
+		arcs.add(new ArcView(this, x, y, width, height, 0, 165, 0f, 0));
+		arcs.add(new ArcView(this, x, y, width, height, 165, 135, 0f, 1));
+		arcs.add(new ArcView(this, x, y, width, height, 300, 60, 0f, 2));
 	}
 	
 	protected void onDraw(Canvas canvas){
@@ -53,7 +53,11 @@ public class PieChart extends View implements OnTouchListener{
 			arc.draw(canvas);
 		}
 	}
+
 	
+///////////////////////////////////////////////////////
+//touch
+///////////////////////////////////////////////////////
 	@Override
 	public boolean onTouch(View arg0, MotionEvent e) {
 		Log.d("tag", "onTouch");
@@ -80,7 +84,7 @@ public class PieChart extends View implements OnTouchListener{
 		int result = -1;
 		
 		Point center = new Point(y + height/2, x + width/2);
-		int radius = width/2;
+		float radius = width * .75f;	//slight buffer outside
 		
 		int distance = getDistance(loc, center);
 		Log.d("touch", String.format("Center %s, TouchPoint %s, distance %s, radius %s",
@@ -95,7 +99,7 @@ public class PieChart extends View implements OnTouchListener{
 			
 			for(ArcView arc : arcs){
 				//if the angle is within this arc
-				if(angle > arc.getBeginAngle() && angle < (arc.getBeginAngle() + arc.getSweep()) % 360){
+				if(angle > arc.getBeginAngle() && angle < arc.getEndAngle()){
 					result = arc.getIndex();
 				}
 			}
@@ -111,13 +115,28 @@ public class PieChart extends View implements OnTouchListener{
 		return Math.abs(point1.x - point2.x) + Math.abs(point2.y - point1.y);
 	}
 	
+	/**Use arctan to get the angle between the two points*/
 	private static double getAngle(Point center, Point point){
 		int xDiff = point.x - center.x;
 		int yDiff = point.y - center.y;
-		return Math.toDegrees(Math.atan2(yDiff, xDiff));
+		double result = Math.toDegrees(Math.atan2(yDiff, xDiff));
+		
+		return convertAngle(result);
 	}
 	
-
+	/**The angle returned by arctan is not compatible with the angles
+	 * used by the arcs. 0 is at due south (90 degrees on the arc's circle) and it goes counter clockwise
+	 * as opposed to clockwise. Also, anything in the 1st and 4th quadrant is a negative angle.
+	 * 
+	 * This method's logic converts the arctan angle into an angle on the arc's circle.
+	 */
+	private static double convertAngle(double angle){
+		return 180 - angle;
+	}
+	
+///////////////////////////////////////////////////////
+//opening animation
+///////////////////////////////////////////////////////
 	public void replayAnimation(){
 		for(ArcView arc : arcs){
 			arc.setScale(0);
@@ -158,6 +177,12 @@ public class PieChart extends View implements OnTouchListener{
 	}
 	static int nextAnim = 0;
 	
+	
+	
+	
+///////////////////////////////////////////////////////
+//arcview
+///////////////////////////////////////////////////////
 	private class ArcView extends ShapeDrawable {
 		private int left;
 		private int top;
@@ -174,7 +199,7 @@ public class PieChart extends View implements OnTouchListener{
 		private int index;
 		
 		private boolean expanded;
-		private static final float EXPAND_SCALE = 1.2f;
+		private static final float EXPAND_SCALE = 1.1f;
 		
 		
 		/**determines the size of the arc as a measure
@@ -182,24 +207,33 @@ public class PieChart extends View implements OnTouchListener{
 		 */
 		private float scale = 1;
 		
+		
 		public ArcView(View parent, int x, int y, int height, int width,
 				float beginAngle, float sweepAngle, float scale, int index){
 			super(new ArcShape(beginAngle, sweepAngle));			
 			
 			this.left = x; this.top = y; this.height = height; this.width = width;
-			this.beginAngle = beginAngle; this.sweepAngle = sweepAngle;
+			
+			this.beginAngle = beginAngle;
+			
+			this.sweepAngle = sweepAngle;
+			this.index = index;
 			
 			getPaint().setColor(0xff080808 + (0xff080808 * index * 3));
 			setScale(scale);
 			setCallback(parent);
+			
+			Log.d("arc", String.format("%s Arc created, beginAngle %s, endAngle %s",
+					getIndex(), getBeginAngle(), getEndAngle()));
 		}
 		
 		public int getIndex() {
 			return index;
 		}
 
+		
 		/**Keep the center in the same place, but change size
-		 * of bounding rectangle to change size.
+		 * of bounding rectangle to simulate the arc growing outward.
 		 * @param scale the scale
 		 */
 		public void setScale(float scale){
@@ -213,7 +247,9 @@ public class PieChart extends View implements OnTouchListener{
 			scaledWidth = (int) (width - (width - (width * scale)));
 			
 			this.setBounds(scaledLeft, scaledTop, scaledLeft + scaledWidth, scaledTop + scaledHeight);
-			this.setShape(new ArcShape(beginAngle, sweepAngle));
+			
+			//0 degrees is at due east. We want it at due north
+			this.setShape(new ArcShape(beginAngle - 90, sweepAngle));
 		}
 
 		@Override 
@@ -249,6 +285,10 @@ public class PieChart extends View implements OnTouchListener{
 		
 		public float getSweep(){
 			return sweepAngle;
+		}
+		
+		public float getEndAngle(){
+			return beginAngle + sweepAngle;
 		}
 	}
 
