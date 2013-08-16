@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.example.piechart.ChartDataset.DataItem;
@@ -37,6 +40,8 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 	}
 
 	private void setViews() {
+		((Button)getView().findViewById(R.id.new_data_button)).setOnClickListener(this);
+		
 		dataViews.add((TextView)getView().findViewById(R.id.item1));
 		dataViews.add((TextView)getView().findViewById(R.id.item2));
 		dataViews.add((TextView)getView().findViewById(R.id.item3));
@@ -67,25 +72,34 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 
 	@Override
 	public void onClick(View view) {
+		
+		if(view.getId() == R.id.new_data_button){
+			((MainActivity)getActivity()).newDataButtonClicked();
+			return;
+		}
 		int item = Integer.parseInt(((TextView)view).getText().toString().substring(5, 6));
 		
 		((MainActivity)getActivity()).listItemClicked(item);
 		
-		inflateItem(item);
+		boldItem(item);
 	}
 
-	private void inflateItem(int item) {
-		final int REG_TEXT_SIZE = 20;
-		final int INFLATED_TEXT_SIZE = 27;
-		
+	public void boldItem(int item) {
+		Log.d("inflate", "inflating " + item);
 		int size = dataViews.size();
 		for(int i = 0; i < size; i ++){
 			TextView view = dataViews.get(i);
-			if(i == item){
-				view.setTextSize(INFLATED_TEXT_SIZE);
+			Typeface style = view.getTypeface();
+			if(style != null && style.getStyle() == Typeface.BOLD){
+				view.setTypeface(null, Typeface.NORMAL);
 			}
 			else{
-				view.setTextSize(REG_TEXT_SIZE);
+				if(i == item){
+					view.setTypeface(null, Typeface.BOLD);
+				}
+				else{
+					view.setTypeface(null, Typeface.NORMAL);
+				}
 			}
 		}
 	

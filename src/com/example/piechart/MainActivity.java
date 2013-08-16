@@ -27,25 +27,22 @@ public class MainActivity extends FragmentActivity {
 		return true;
 	}
 	
-	@Override
-	public void onResume(){
-		super.onResume();
-	}
-	
 	public void setData(ChartDataset dataset){
 		itemFrag.setData(dataset);
+		
 	}
 	
-	public void chartClicked(int itemIndex){
-		
+	public void arcClicked(int arcIndex){
+		itemFrag.boldItem(arcIndex);
 	}
 
 	public void listItemClicked(int itemIndex) {
 		Log.d("item click", "" + itemIndex);
 		chartFrag.inflateArc(itemIndex);
-		
 	}
 	
-
+	public void newDataButtonClicked(){
+		chartFrag.newData();
+	}
 
 }

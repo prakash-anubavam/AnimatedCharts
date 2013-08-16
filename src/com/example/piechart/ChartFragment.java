@@ -65,7 +65,7 @@ public class ChartFragment extends android.support.v4.app.Fragment{
 		HashMap<String, Double> map =  new HashMap<String, Double>();
 		rand = new Random();
 		final int MAX_ITEM = 5000;
-		final int numItems = rand.nextInt(3) + 3;
+		final int numItems = rand.nextInt(3) + 2;
 		
 		for(int i = 0; i < numItems; i++){
 			Double d = ((double)rand.nextInt(MAX_ITEM));
@@ -80,8 +80,15 @@ public class ChartFragment extends android.support.v4.app.Fragment{
 		return data;
 	}
 	
+	public void arcClicked(int arcIndex){
+		((MainActivity)getActivity()).arcClicked(arcIndex);
+	}
+	
 	public void inflateArc(int item){
 		pc.inflateArcIndex(item);
 	}
 	
+	public void newData(){
+		initChart();
+	}
 }
