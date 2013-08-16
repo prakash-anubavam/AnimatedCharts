@@ -3,6 +3,8 @@ package com.example.piechart;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.piechart.ChartDataset.DataItem;
+
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -25,22 +27,26 @@ public class PieChart extends View implements OnTouchListener{
 	
 	int x; int y;
 	int width; int height;
+	ChartDataset mData;
 	
 	Paint mLinePainter;
 	ArrayList<Point> mLineEndPoints;
-
+	
+	MainActivity parent;
 	Point mCenter;
 	
-	public PieChart(Context context, int width, int height, int x, int y) {
+	public PieChart(MainActivity context, int width, int height, int x, int y, ChartDataset data) {
 		super(context);
 		this.width = width;
 		this.height = height;
 		this.x = x;
 		this.y = y;
+		this.parent = context;
 		
 		mCenter = new Point(x + width/2, y + height/2);
+		mData = data;
 		
-		addArcs(width, height, x, y);
+		addArcs();
 	
 		initLineEndPoints(width);
 
@@ -69,11 +75,19 @@ public class PieChart extends View implements OnTouchListener{
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 	}
 	
-	private void addArcs(int width, int height, int x, int y) {
+	private void addArcs() {
+		int endOfLastArc = 0;
+		int index = 0;
 		arcs = new ArrayList<ArcView>(); 
-		arcs.add(new ArcView(this, x, y, width, height, 0, 165, 0f, 0));
-		arcs.add(new ArcView(this, x, y, width, height, 165, 135, 0f, 1));
-		arcs.add(new ArcView(this, x, y, width, height, 300, 60, 0f, 2));
+		
+		List<DataItem> dataItems = mData.getData();
+		for(DataItem data : dataItems){
+			int sweep = (int) Math.round(data.getPercentage() * 360);
+			
+			arcs.add(new ArcView(this, x, y, width, height, endOfLastArc, sweep, 0f, index));
+			endOfLastArc = endOfLastArc + sweep;
+			index++;
+		}
 	}
 	
 	protected void onDraw(Canvas canvas){
@@ -83,7 +97,6 @@ public class PieChart extends View implements OnTouchListener{
 		
 		//Draw white lines
 		for(Point endPoint : mLineEndPoints){
-			//Log.d("point", mCenter.toString() + " " + endPoint.toString());
 			canvas.drawLine(mCenter.x, mCenter.y, endPoint.x, endPoint.y, mLinePainter);
 		}
 	}
@@ -161,7 +174,7 @@ public class PieChart extends View implements OnTouchListener{
 			}
 		}
 		else{
-			replayAnimation();
+			parent.initChart();
 		}
 		Log.d("touch", "In arc: " + result);
 		return result;
@@ -337,10 +350,6 @@ public class PieChart extends View implements OnTouchListener{
 		
 		public float getBeginAngle(){
 			return beginAngle;
-		}
-		
-		public float getSweep(){
-			return sweepAngle;
 		}
 		
 		public float getEndAngle(){
