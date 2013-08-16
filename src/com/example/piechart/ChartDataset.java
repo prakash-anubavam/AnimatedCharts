@@ -33,6 +33,7 @@ public class ChartDataset {
 			DataItem item = new DataItem(entry.getKey(), entry.getValue(), sum);
 			items.add(item);
 		}
+		sortData();
 	}
 
 	@SuppressWarnings("unchecked")

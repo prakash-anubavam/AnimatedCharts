@@ -32,11 +32,11 @@ public class PieChart extends View implements OnTouchListener{
 	Paint mLinePainter;
 	ArrayList<Point> mLineEndPoints;
 	
-	MainActivity parent;
+	ChartFragment parent;
 	Point mCenter;
 	
-	public PieChart(MainActivity context, int width, int height, int x, int y, ChartDataset data) {
-		super(context);
+	public PieChart(ChartFragment context, int width, int height, int x, int y, ChartDataset data) {
+		super(context.getActivity());
 		this.width = width;
 		this.height = height;
 		this.x = x;

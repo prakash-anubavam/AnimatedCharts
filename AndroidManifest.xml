@@ -14,8 +14,17 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.example.piechart.MainActivity"
+            android:name="com.example.piechart.ChartFragment"
             android:label="@string/app_name" >
+            
+        </activity>
+        <activity
+            android:name="com.example.piechart.ItemListFragment"
+            android:label="@string/title_activity_item_list_fragment" >
+        </activity>
+        <activity
+            android:name="com.example.piechart.MainActivity"
+            android:label="@string/title_activity_main" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
