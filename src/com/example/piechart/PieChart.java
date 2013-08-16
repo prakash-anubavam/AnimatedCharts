@@ -136,6 +136,10 @@ public class PieChart extends View implements OnTouchListener{
 		
 		int arcIndex = whichArcIsThePointIn(new Point(eventY, eventX));
 		
+		return inflateArcIndex(arcIndex);
+	}
+
+	public boolean inflateArcIndex(int arcIndex) {
 		for(ArcView arc : arcs){
 			if(arcIndex == arc.getIndex() && !arc.isExpanded()){
 				arc.expand();			
@@ -266,6 +270,7 @@ public class PieChart extends View implements OnTouchListener{
 		private float beginAngle;
 		private float sweepAngle;
 		private int index;
+		private int color;
 		
 		private boolean expanded;
 		private static final float EXPAND_SCALE = 1.1f;
@@ -287,7 +292,9 @@ public class PieChart extends View implements OnTouchListener{
 			this.sweepAngle = sweepAngle;
 			this.index = index;
 			
-			getPaint().setColor(0xff080808 + (0xff080808 * index * 3));
+			this.color = 0xff080808 + (0xff080808 * index * 3);
+			
+			getPaint().setColor(color);
 			setScale(scale);
 			setCallback(parent);
 			
@@ -354,6 +361,10 @@ public class PieChart extends View implements OnTouchListener{
 		
 		public float getEndAngle(){
 			return beginAngle + sweepAngle;
+		}
+		
+		public int getColor(){
+			return color;
 		}
 	}
 

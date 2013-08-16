@@ -5,18 +5,16 @@ import java.util.Random;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
-public class ChartFragment extends Fragment implements OnClickListener{
+public class ChartFragment extends android.support.v4.app.Fragment{
 	PieChart pc;
 	ViewGroup container;
 	Random rand;
+	ChartDataset data;
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
@@ -55,10 +53,12 @@ public class ChartFragment extends Fragment implements OnClickListener{
 		ChartDataset dataset = new ChartDataset(map);
 		
 		//context, width, height, x, y, dataset
-		pc = new PieChart(this, 600, 600, 200, 100, dataset);
+		pc = new PieChart(this, 400, 400, 270, 100, dataset);
 		container.removeAllViews();
 		container.addView(pc);
 		pc.replayAnimation();
+		
+		((MainActivity)getActivity()).setData(dataset);
 	}
 
 	private HashMap<String, Double> generateData() {
@@ -75,11 +75,13 @@ public class ChartFragment extends Fragment implements OnClickListener{
 		
 		return map;
 	}
-
-	@Override
-	public void onClick(View arg0) {
-		Log.d("items", "onClick");
-		initChart();
+	
+	public ChartDataset getData(){
+		return data;
+	}
+	
+	public void inflateArc(int item){
+		pc.inflateArcIndex(item);
 	}
 	
 }
