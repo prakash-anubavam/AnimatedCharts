@@ -3,7 +3,7 @@ package com.example.piechart;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.piechart.ChartDataset.DataItem;
+import com.example.piechart.PieChartDataset.PieChartDataItem;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
@@ -27,7 +27,7 @@ public class PieChart extends View implements OnTouchListener{
 	
 	int x; int y;
 	int width; int height;
-	ChartDataset mData;
+	PieChartDataset mData;
 	
 	Paint mLinePainter;
 	ArrayList<Point> mLineEndPoints;
@@ -35,7 +35,7 @@ public class PieChart extends View implements OnTouchListener{
 	ChartFragment parent;
 	Point mCenter;
 	
-	public PieChart(ChartFragment context, int width, int height, int x, int y, ChartDataset data) {
+	public PieChart(ChartFragment context, int width, int height, int x, int y, PieChartDataset data) {
 		super(context.getActivity());
 		this.width = width;
 		this.height = height;
@@ -80,8 +80,8 @@ public class PieChart extends View implements OnTouchListener{
 		int index = 0;
 		arcs = new ArrayList<ArcView>(); 
 		
-		List<DataItem> dataItems = mData.getData();
-		for(DataItem data : dataItems){
+		List<PieChartDataItem> dataItems = mData.getData();
+		for(PieChartDataItem data : dataItems){
 			int sweep = (int) Math.round(data.getPercentage() * 360);
 			
 			arcs.add(new ArcView(this, x, y, width, height, endOfLastArc, sweep, 0f, index));

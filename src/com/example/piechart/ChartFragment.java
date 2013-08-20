@@ -14,7 +14,7 @@ public class ChartFragment extends android.support.v4.app.Fragment{
 	PieChart pc;
 	ViewGroup container;
 	Random rand;
-	ChartDataset data;
+	PieChartDataset data;
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
@@ -50,7 +50,7 @@ public class ChartFragment extends android.support.v4.app.Fragment{
 		
 		HashMap<String, Double> map = generateData();
 		
-		ChartDataset dataset = new ChartDataset(map);
+		PieChartDataset dataset = new PieChartDataset(map);
 		
 		//context, width, height, x, y, dataset
 		pc = new PieChart(this, 400, 400, 270, 100, dataset);
@@ -76,7 +76,7 @@ public class ChartFragment extends android.support.v4.app.Fragment{
 		return map;
 	}
 	
-	public ChartDataset getData(){
+	public PieChartDataset getData(){
 		return data;
 	}
 	

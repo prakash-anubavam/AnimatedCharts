@@ -14,7 +14,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.example.piechart.ChartDataset.DataItem;
+import com.example.piechart.PieChartDataset.PieChartDataItem;
 
 public class ItemListFragment extends android.support.v4.app.Fragment implements OnClickListener {
 
@@ -54,12 +54,12 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 		}
 	}
 
-	public void setData(ChartDataset dataset) {
+	public void setData(PieChartDataset dataset) {
 		setViews();
 		
-		List<DataItem> items = dataset.getData();
+		List<PieChartDataItem> items = dataset.getData();
 		for(int i = 0; i < items.size(); i++){
-			DataItem item = items.get(i);
+			PieChartDataItem item = items.get(i);
 			TextView view = dataViews.get(i);
 			int percentage = (int)Math.round(item.getPercentage() * 100);
 			String str = String.format("Item %s: %s, %s", 

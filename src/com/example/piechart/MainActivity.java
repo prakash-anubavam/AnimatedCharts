@@ -27,7 +27,7 @@ public class MainActivity extends FragmentActivity {
 		return true;
 	}
 	
-	public void setData(ChartDataset dataset){
+	public void setData(PieChartDataset dataset){
 		itemFrag.setData(dataset);
 		
 	}
