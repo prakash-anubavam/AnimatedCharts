@@ -7,6 +7,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
@@ -111,22 +112,27 @@ public class LineChart extends View {
 		Paint paintLines = new Paint();
 		paintLines.setColor(Color.BLACK);
 		paintLines.setStrokeWidth(STROKE_WIDTH);
-		
+		Path path = new Path();
 		
 		DataPoint first = points.get(0);
+		path.moveTo(first.getX(),  first.getY());
 		
 		int size = points.size();
-		for(int i = 1; i < size; i++){
-			DataPoint second = points.get(i);
+		for(int i = 1; i < size - 1; i++){
+			DataPoint next = points.get(i);
+			DataPoint nextAfter = points.get(i + 1);
+			path.quadTo(next.getX(), next.getY(), nextAfter.getX(), nextAfter.getY());
 			
-			canvas.drawLine(first.getX(),  first.getY(), 
+			/*canvas.drawLine(first.getX(),  first.getY(), 
 					second.getX(), second.getY(), paintLines);
 			
 			Log.d("draw", String.format("x1 %s, y1 %s, x2 %s, y2 %s",
 					first.getX(), first.getY(), second.getX(), second.getY()));
 			
-			first = second;
+			first = second;*/
 		}
+		
+		canvas.drawPath(path, paintLines);
 	}
 	
 	

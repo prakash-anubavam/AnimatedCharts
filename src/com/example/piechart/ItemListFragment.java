@@ -62,8 +62,8 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 			PieChartDataItem item = items.get(i);
 			TextView view = dataViews.get(i);
 			int percentage = (int)Math.round(item.getPercentage() * 100);
-			String str = String.format("Item %s: %s, %s", 
-					i, (int)item.getData(), percentage);
+			String str = String.format("%s: %s, %s", 
+					item.getLabel(), (int)item.getData(), percentage);
 			view.setText(str + "%");
 			view.setVisibility(View.VISIBLE);
 		}

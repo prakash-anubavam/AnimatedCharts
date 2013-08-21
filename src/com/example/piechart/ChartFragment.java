@@ -69,7 +69,7 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 		HashMap<String, Double> map =  new HashMap<String, Double>();
 		rand = new Random();
 		final int MAX_ITEM = 5000;
-		final int numItems = rand.nextInt(3) + 2;
+		final int numItems = rand.nextInt(3) + 3;
 		
 		for(int i = 0; i < numItems; i++){
 			Double d = ((double)rand.nextInt(MAX_ITEM));
