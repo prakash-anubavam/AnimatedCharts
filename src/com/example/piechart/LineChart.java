@@ -35,6 +35,15 @@ public class LineChart extends View {
 	
 	private Point origin;
 	
+	Paint paintText;
+	Paint paintLines;
+	Paint paintTicks;
+	Paint paintAxes;
+	
+	final int Y_INCREMENT = height / Y_TICKS;
+	final int X_OFFSET = 50;
+	final int TEXT_SIZE = 20;
+	
 	public LineChart(LineChartParent parent, int x, int y, int width, int height, LineChartDataset dataset) {
 		super(parent.getContext());
 		
@@ -45,6 +54,7 @@ public class LineChart extends View {
 		this.dataset = dataset;
 		
 		getMax();
+		initPaints();
 		
 		setPoints();
 	}
@@ -73,45 +83,50 @@ public class LineChart extends View {
 		}
 	}
 	
-	@Override
-	public void draw(Canvas canvas){
-		
-		Paint paintAxes = new Paint();
+	public void initPaints(){
+		paintAxes = new Paint();
 		paintAxes.setColor(Color.BLACK);
 		paintAxes.setStrokeWidth(STROKE_WIDTH);
+		
+
+		paintText = new Paint();
+		paintText.setColor(Color.BLACK);
+		paintText.setStrokeWidth(STROKE_WIDTH);
+		paintText.setTextSize(TEXT_SIZE);
+		
+		paintLines = new Paint();
+		paintLines.setColor(Color.BLACK);
+		paintLines.setStyle(Paint.Style.STROKE);
+		paintLines.setStrokeWidth(STROKE_WIDTH);
+		
+	}
+	
+	@Override
+	public void draw(Canvas canvas){
 		
 		canvas.drawLine(x, y, x, y + height, paintAxes); //y axis
 		canvas.drawLine(x, origin.y, x + width, origin.y, paintAxes); //x axis
 		
 		Log.d("draw", "" + points.size());
 		
-		drawHatches(canvas);
+		drawTicks(canvas);
 		
 		if(points.size() >= 2){  	//no lines to draw
 			drawConnections(canvas);
 		}
 	}
 	
-	private void drawHatches(Canvas canvas){
-		final int Y_INCREMENT = height / Y_TICKS;
-		final int X_OFFSET = 50;
-		final int TEXT_SIZE = 20;
-		
-		Paint textPaint = new Paint();
-		textPaint.setColor(Color.BLACK);
-		textPaint.setStrokeWidth(STROKE_WIDTH);
-		textPaint.setTextSize(TEXT_SIZE);
+	
+	private void drawTicks(Canvas canvas){
 		
 		for(int i = 0; i < Y_TICKS + 1; i++){
 			String val = "" + (i * (int)maxValue/Y_TICKS);
-			canvas.drawText(val, x - X_OFFSET, origin.y - i * Y_INCREMENT, textPaint);
+			canvas.drawText(val, x - X_OFFSET, origin.y - i * Y_INCREMENT, paintText);
 		}
 	}
 
 	private void drawConnections(Canvas canvas) {
-		Paint paintLines = new Paint();
-		paintLines.setColor(Color.BLACK);
-		paintLines.setStrokeWidth(STROKE_WIDTH);
+		
 		Path path = new Path();
 		
 		DataPoint first = points.get(0);
@@ -121,15 +136,17 @@ public class LineChart extends View {
 		for(int i = 1; i < size - 1; i++){
 			DataPoint next = points.get(i);
 			DataPoint nextAfter = points.get(i + 1);
+			
+			/*int x2 = (first.getX() + next.getX())/2;
+			int y2 = (first.getY() + next.getY())/2;*/
+			
 			path.quadTo(next.getX(), next.getY(), nextAfter.getX(), nextAfter.getY());
+			first = next;
 			
 			/*canvas.drawLine(first.getX(),  first.getY(), 
-					second.getX(), second.getY(), paintLines);
+					next.getX(), next.getY(), paintLines);
+			first = next;*/
 			
-			Log.d("draw", String.format("x1 %s, y1 %s, x2 %s, y2 %s",
-					first.getX(), first.getY(), second.getX(), second.getY()));
-			
-			first = second;*/
 		}
 		
 		canvas.drawPath(path, paintLines);
