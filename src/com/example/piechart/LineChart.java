@@ -40,7 +40,6 @@ public class LineChart extends View {
 	Paint paintTicks;
 	Paint paintAxes;
 	
-	final int Y_INCREMENT = height / Y_TICKS;
 	final int X_OFFSET = 50;
 	final int TEXT_SIZE = 20;
 	
@@ -122,7 +121,7 @@ public class LineChart extends View {
 	
 	
 	private void drawTicks(Canvas canvas){
-		
+		final int Y_INCREMENT = height / Y_TICKS;
 		for(int i = 0; i < Y_TICKS + 1; i++){
 			String val = "" + (i * (int)maxValue/Y_TICKS);
 			canvas.drawText(val, x - X_OFFSET, origin.y - i * Y_INCREMENT, paintText);
