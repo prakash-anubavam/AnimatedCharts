@@ -114,6 +114,10 @@ public class LineChart extends View {
 		if(points.size() >= 2){  	//no lines to draw
 			drawConnections(canvas);
 		}
+		
+		for(DataPoint point : points){
+			point.draw(canvas);
+		}
 	}
 	
 	
@@ -162,7 +166,8 @@ public class LineChart extends View {
 		private int index;
 		private String label;
 		private Point location;
-		private int radius = 0; 
+		private int radius = MAX_RADIUS; 
+		Paint mPaint;
 		
 		public DataPoint(String label, int index, int x, int y){
 			location = new Point(x, y);
@@ -172,13 +177,14 @@ public class LineChart extends View {
 			OvalShape ovalShape = new OvalShape();
 			ovalShape.resize(radius, radius);
 			this.setShape(ovalShape);
+			
+			mPaint = new Paint();
 		}
 		
 		@Override 
 		public void draw(Canvas canvas){
-			Paint paint = new Paint();
-			paint.setColor(Color.GRAY);
-			canvas.drawCircle(location.x, location.y, radius, paint);
+			mPaint.setColor(Color.GRAY);
+			canvas.drawCircle(location.x, location.y, radius, mPaint);
 		}
 		
 		public int getY(){ return location.y; }
