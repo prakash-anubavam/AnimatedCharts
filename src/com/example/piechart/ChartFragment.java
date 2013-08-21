@@ -3,6 +3,7 @@ package com.example.piechart;
 import java.util.HashMap;
 import java.util.Random;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,8 +11,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
-public class ChartFragment extends android.support.v4.app.Fragment{
+public class ChartFragment extends android.support.v4.app.Fragment implements LineChart.LineChartParent{
 	PieChart pc;
+	LineChart lc;
 	ViewGroup container;
 	Random rand;
 	PieChartDataset data;
@@ -43,20 +45,22 @@ public class ChartFragment extends android.support.v4.app.Fragment{
 	public void init(){
 		container = (RelativeLayout)getView().findViewById(R.id.container);
 		container.setBackgroundColor(Color.WHITE);
-		initChart();
+		initCharts();
 	}
 	
-	public void initChart() {
+	public void initCharts() {
 		
 		HashMap<String, Double> map = generateData();
 		
 		PieChartDataset dataset = new PieChartDataset(map);
+		LineChartDataset lineData = new LineChartDataset(map);
 		
-		//context, width, height, x, y, dataset
-		pc = new PieChart(this, 400, 400, 270, 100, dataset);
+		//context, x, y, width, height,  dataset
+		pc = new PieChart(this, 270, 100, 400, 400,  dataset);
+		lc = new LineChart(this, 100, 100, 800, 400,  lineData);
 		container.removeAllViews();
-		container.addView(pc);
-		pc.replayAnimation();
+		container.addView(lc);
+		//pc.replayAnimation();
 		
 		((MainActivity)getActivity()).setData(dataset);
 	}
@@ -89,6 +93,20 @@ public class ChartFragment extends android.support.v4.app.Fragment{
 	}
 	
 	public void newData(){
-		initChart();
+		initCharts();
+	}
+
+
+	
+	
+	@Override
+	public void LineChartItemClicked() {
+		// TODO Auto-generated method stub
+	}
+
+
+	@Override
+	public Context getContext() {
+		return getActivity();
 	}
 }
