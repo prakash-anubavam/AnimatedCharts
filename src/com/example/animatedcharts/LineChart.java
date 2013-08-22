@@ -14,10 +14,11 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
+import android.os.Handler;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.animation.OvershootInterpolator;
 
 import com.example.animatedcharts.LineChartDataset.LineChartDataItem;
 
@@ -70,6 +71,8 @@ public class LineChart extends View implements OnClickListener{
 		initPaints();
 		
 		setPoints();
+		
+		animatePoints();
 	}
 	
 	private void getMax() {
@@ -87,8 +90,10 @@ public class LineChart extends View implements OnClickListener{
 		Log.d("maxValue", "divisor: " + divisor);
 		
 		int upTo = divisor;
+		int howMany = 0;
 		while(upTo < maxValue){
 			upTo += (divisor);
+			howMany++;
 		}
 		maxValue = upTo;
 		
@@ -113,6 +118,10 @@ public class LineChart extends View implements OnClickListener{
 			pointX = x + (i * x_offset); 
 			pointY = (int)Math.round((origin.y) - (item.getData() / maxValue) * height);
 			points.add(new DataPoint("Item: " + i, i, pointX, pointY));
+		}
+		
+		for(DataPoint point : points){
+			point.setY(origin.y);
 		}
 	}
 	
@@ -152,7 +161,7 @@ public class LineChart extends View implements OnClickListener{
 //////////////////////////////////////////////////////////////////////////
 	@Override
 	public void draw(Canvas canvas){
-		Log.d("draw", "" + points.size());
+		invalidate();
 		setYTicks();
 		
 		int y_increment = height / y_ticks;
@@ -173,17 +182,27 @@ public class LineChart extends View implements OnClickListener{
 	}
 
 	private void setYTicks() {
+		
 		int digits = getDigits(maxValue);
-		double smaller = maxValue / (Math.max(1, Math.pow(10, digits - 2)));
+		int smaller = (int) (maxValue / (Math.max(1, Math.pow(10, digits - 2))));
+		
+		Log.d("ticks", "smaller: " + smaller);
 		
 		double divisor = 5;
 		while(divisor <= 9){
 			if(smaller % divisor == 0) break;
 			divisor++;
 		}
+		
+		Log.d("ticks", "divisor: " + divisor);
 		if(divisor >= 9){
-			maxValue += Math.pow(10,  Math.max((digits -1),1));
+			double add = Math.pow(10,  Math.max((digits -1),1));
+			
+			Log.d("ticks", "add: " + add);
+			maxValue += add;
 			setYTicks();
+			
+			return;
 		}
 		
 		y_ticks = (int)divisor;
@@ -281,22 +300,43 @@ public class LineChart extends View implements OnClickListener{
 //Animate
 //////////////////////////////////////////////////////////////////////////	
 	public void animatePoints(){
-		final long DURATION = 1000;
+		final long DURATION = 500;
 		
-		ArrayList<Animator> animations = new ArrayList<Animator>();
-		AnimatorSet set = new AnimatorSet();
+		ArrayList<Animator> upAnimations = new ArrayList<Animator>();
+		ArrayList<Animator> fadeAnimations = new ArrayList<Animator>();
+		
+		AnimatorSet upSet = new AnimatorSet();
+		final AnimatorSet fadeSet = new AnimatorSet();
 		
 		for(int i = 0; i < points.size(); i++){
 			DataPoint point = points.get(i);
 			int y2 = point.getReal().y;
 			
-			ObjectAnimator anim = ObjectAnimator.ofFloat(point, "radius", point.RADIUS, point.EXPAND);
-			anim.setDuration(DURATION);
-			animations.add(anim);
+			ObjectAnimator up = ObjectAnimator.ofFloat(point, "y", origin.y, y2);
+			up.setDuration(DURATION);
+			up.setInterpolator(new OvershootInterpolator());
+			upAnimations.add(up);
+			
+			ObjectAnimator fade = ObjectAnimator.ofFloat(point, "alpha", 0f, 1f);
+			fade.setDuration(DURATION);
+			fadeAnimations.add(fade);
 		}
 		
-		set.playTogether(animations);
-		set.start();
+		AnimatorSet both = new AnimatorSet();
+		
+		upSet.playTogether(upAnimations);
+		fadeSet.playTogether(fadeAnimations);
+		
+		upSet.start();
+		fadeSet.start();
+		/*Handler handler = new Handler();
+		handler.postDelayed(new Runnable() {
+			
+			@Override
+			public void run() {
+				fadeSet.start();
+			}
+		}, (long)(DURATION * .75));*/
 	}
 	
 	
@@ -313,6 +353,7 @@ public class LineChart extends View implements OnClickListener{
 		private String label;
 		private Point location;
 		private Point realLocation;
+		private int alpha;
 		
 		/**The control point is used to determine the bezier curve that goes through
 		 * this datapoint*/
@@ -341,6 +382,7 @@ public class LineChart extends View implements OnClickListener{
 			mPaint.setStyle(Paint.Style.FILL);
 			canvas.drawCircle(location.x, location.y, radius, mPaint);
 			
+			mPaint.setAlpha(alpha);
 			mPaint.setColor(Color.BLACK);
 			mPaint.setStyle(Paint.Style.STROKE);
 			mPaint.setStrokeWidth(4f);
@@ -350,6 +392,11 @@ public class LineChart extends View implements OnClickListener{
 		public void setY(float y){ 
 			location.y = (int)y;
 		}
+		
+		public void setAlpha(float val){
+			alpha = (int) (255 * val);
+		}
+		public int getAlpha(){ return alpha; }
 		
 		public Point getPoint(){ return location; }
 		public int getY(){ return location.y; }
