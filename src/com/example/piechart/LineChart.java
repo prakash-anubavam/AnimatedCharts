@@ -27,7 +27,7 @@ public class LineChart extends View {
 	final int Y_TICKS = 5;
 	final int X_TICKS = 10;
 	
-	final int STROKE_WIDTH = 4;
+	final float STROKE_WIDTH = 6f;
 	
 	LineChartDataset dataset;
 	
@@ -40,8 +40,10 @@ public class LineChart extends View {
 	Paint paintTicks;
 	Paint paintAxes;
 	
-	final int X_OFFSET = 50;
+	final int TEXT_DISTANCE_FROM_AXIS = 60;
 	final int TEXT_SIZE = 20;
+	
+	final int CURVE_TENSION = 5;
 	
 	public LineChart(LineChartParent parent, int x, int y, int width, int height, LineChartDataset dataset) {
 		super(parent.getContext());
@@ -70,7 +72,7 @@ public class LineChart extends View {
 		points = new ArrayList<DataPoint>();
 		
 		int size = dataset.size();
-		int x_offset = width/size;
+		int x_offset = width/(size - 1);
 		
 		int pointX; int pointY;
 		
@@ -124,35 +126,59 @@ public class LineChart extends View {
 		final int Y_INCREMENT = height / Y_TICKS;
 		for(int i = 0; i < Y_TICKS + 1; i++){
 			String val = "" + (i * (int)maxValue/Y_TICKS);
-			canvas.drawText(val, x - X_OFFSET, origin.y - i * Y_INCREMENT, paintText);
+			canvas.drawText(val, x - TEXT_DISTANCE_FROM_AXIS, origin.y - i * Y_INCREMENT, paintText);
 		}
 	}
 
 	private void drawConnections(Canvas canvas) {
 		
 		Path path = new Path();
+		int size = points.size();
+		if(size <= 1) return;
+		
+		setControlPoints(size);
 		
 		DataPoint first = points.get(0);
+		
 		path.moveTo(first.getX(),  first.getY());
 		
-		int size = points.size();
-		for(int i = 1; i < size - 1; i++){
-			DataPoint next = points.get(i);
-			DataPoint nextAfter = points.get(i + 1);
+		for(int i = 1; i < size; i++){
+			DataPoint current = points.get(i);
+			DataPoint prev = points.get(i- 1);
 			
-			/*int x2 = (first.getX() + next.getX())/2;
-			int y2 = (first.getY() + next.getY())/2;*/
-			
-			path.quadTo(next.getX(), next.getY(), nextAfter.getX(), nextAfter.getY());
-			first = next;
-			
-			/*canvas.drawLine(first.getX(),  first.getY(), 
-					next.getX(), next.getY(), paintLines);
-			first = next;*/
-			
+			path.cubicTo(prev.getControlX() + prev.getX(), prev.getControlY() + prev.getY(), 
+					current.getX() - current.getControlX(), current.getY() - current.getControlY(),
+					current.getX(), current.getY());
 		}
 		
 		canvas.drawPath(path, paintLines);
+	}
+
+	/**We're going to use Bezier curves to path through the points smoothly. 
+	 * First we set a control point for each data point that will help
+	 * determine its curve later.
+	 */
+	private void setControlPoints(int size) {
+		DataPoint first = points.get(0);
+		DataPoint second = points.get(1);
+		first.setControlPoint(new Point(
+				(second.getX() - first.getX())/CURVE_TENSION,
+				(second.getY() - first.getY())/CURVE_TENSION));
+		
+		for(int i = 1; i < size - 1; i++){
+			Point before = points.get(i -1).getPoint();
+			Point after = points.get(i + 1).getPoint();
+			Point control = new Point();
+			control.x = (after.x - before.x)/CURVE_TENSION;
+			control.y = (after.y - before.y)/CURVE_TENSION;
+			points.get(i).setControlPoint(control);
+		}
+		
+		DataPoint last = points.get(size -1);
+		DataPoint penul = points.get(size -2);
+		last.setControlPoint(new Point(
+				(last.getX() - penul.getX())/CURVE_TENSION,
+				(last.getY() - penul.getY())/CURVE_TENSION));
 	}
 	
 	
@@ -165,6 +191,11 @@ public class LineChart extends View {
 		private int index;
 		private String label;
 		private Point location;
+		
+		/**The control point is used to determine the bezier curve that goes through
+		 * this datapoint*/
+		private Point controlPoint;
+		
 		private int radius = MAX_RADIUS; 
 		Paint mPaint;
 		
@@ -182,16 +213,27 @@ public class LineChart extends View {
 		
 		@Override 
 		public void draw(Canvas canvas){
+			mPaint.setColor(Color.WHITE);
+			mPaint.setStyle(Paint.Style.FILL);
+			canvas.drawCircle(location.x, location.y, radius, mPaint);
 			mPaint.setColor(Color.GRAY);
+			mPaint.setStyle(Paint.Style.STROKE);
+			mPaint.setStrokeWidth(4f);
 			canvas.drawCircle(location.x, location.y, radius, mPaint);
 		}
 		
+		public Point getPoint(){ return location; }
 		public int getY(){ return location.y; }
 		public int getX(){ return location.x; }
 		public void setY(int y){ location.y = y; }
 		public int getRadius(){ return radius; }
 		public void setRadius(int r) { radius = r; } 
 		
+		public void setControlPoint(Point point){ controlPoint = point; }
+		public Point getControlPoint(){ return controlPoint; }
+		
+		public int getControlX(){ return controlPoint.x; }
+		public int getControlY(){ return controlPoint.y; }
 	}
 	
 	
