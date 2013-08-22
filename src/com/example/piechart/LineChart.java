@@ -21,6 +21,8 @@ public class LineChart extends View {
 	/**xy = top left corner coordinates*/
 	private int x; private int y;
 	private int width; private int height;
+	/**Real values are set at construction, independent of animation*/
+	private int realWidth; private int realHeight;
 	
 	private double maxValue = 0;
 	
@@ -39,6 +41,7 @@ public class LineChart extends View {
 	Paint paintLines;
 	Paint paintTicks;
 	Paint paintAxes;
+	Paint paintGrid;
 	
 	final int TEXT_DISTANCE_FROM_AXIS = 60;
 	final int TEXT_SIZE = 20;
@@ -50,6 +53,8 @@ public class LineChart extends View {
 		
 		this.x = x; this.y = y; 
 		this.width = width; this.height = height;
+		this.realWidth = width; this.realHeight = height;
+		
 		origin = new Point(x, y + height);
 		
 		this.dataset = dataset;
@@ -100,17 +105,30 @@ public class LineChart extends View {
 		paintLines.setStyle(Paint.Style.STROKE);
 		paintLines.setStrokeWidth(STROKE_WIDTH);
 		
+		paintGrid = new Paint();
+		paintGrid.setColor(Color.GRAY);
+		paintGrid.setStyle(Paint.Style.STROKE);
+		paintGrid.setStrokeWidth(STROKE_WIDTH/4);
+		
 	}
 	
+	
+//////////////////////////////////////////////////////////////////////////
+//Draw
+//////////////////////////////////////////////////////////////////////////
 	@Override
 	public void draw(Canvas canvas){
-		
+		/*
 		canvas.drawLine(x, y, x, y + height, paintAxes); //y axis
 		canvas.drawLine(x, origin.y, x + width, origin.y, paintAxes); //x axis
-		
+		*/
 		Log.d("draw", "" + points.size());
 		
-		drawTicks(canvas);
+		final int y_increment = height / Y_TICKS;
+		final int x_increment = width / X_TICKS;
+		drawYLabels(canvas, y_increment);
+		drawXLabels(canvas, x_increment);
+		drawGrid(canvas, y_increment, x_increment);
 		
 		if(points.size() >= 2){  	//no lines to draw
 			drawConnections(canvas);
@@ -120,13 +138,33 @@ public class LineChart extends View {
 			point.draw(canvas);
 		}
 	}
-	
-	
-	private void drawTicks(Canvas canvas){
-		final int Y_INCREMENT = height / Y_TICKS;
+
+	private void drawYLabels(Canvas canvas, int y_increment){
+		
 		for(int i = 0; i < Y_TICKS + 1; i++){
 			String val = "" + (i * (int)maxValue/Y_TICKS);
-			canvas.drawText(val, x - TEXT_DISTANCE_FROM_AXIS, origin.y - i * Y_INCREMENT, paintText);
+			canvas.drawText(val, x - TEXT_DISTANCE_FROM_AXIS, origin.y - i * y_increment, paintText);
+		}
+	}
+	
+	private void drawXLabels(Canvas canvas, int x_increment) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private void drawGrid(Canvas canvas, int y_increment, int x_increment){
+		//draw y ticks
+		for(int i = 0; i <= Y_TICKS; i++){
+			Point left = new Point(origin.x, origin.y- y_increment * i);
+			Point right = new Point(origin.x + width, origin.y - y_increment * i);
+			canvas.drawLine(left.x, left.y, right.x,  right.y, paintGrid);
+		}
+		
+		//draw x ticks
+		for(int j = 0; j <= X_TICKS; j++){
+			Point top = new Point(origin.x + x_increment * j, origin.y - height);
+			Point bot = new Point(origin.x + x_increment * j, origin.y);
+			canvas.drawLine(top.x, top.y, bot.x, bot.y, paintGrid);
 		}
 	}
 
@@ -181,7 +219,10 @@ public class LineChart extends View {
 				(last.getY() - penul.getY())/CURVE_TENSION));
 	}
 	
-	
+	public void setHeight(int newHeight){ height = newHeight; }
+	public int getRealHeight(){ return realHeight; }
+	public void setWidth(int newWidth){ width = newWidth; }
+	public int getRealWidth(){ return realWidth; }
 //////////////////////////////////////////////////////////////////////////
 //DataPoint
 //////////////////////////////////////////////////////////////////////////
