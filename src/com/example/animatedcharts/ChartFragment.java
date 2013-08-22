@@ -1,7 +1,9 @@
-package com.example.piechart;
+package com.example.animatedcharts;
 
 import java.util.HashMap;
 import java.util.Random;
+
+import com.example.piechart.R;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -95,15 +97,12 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	public void newData(){
 		initCharts();
 	}
-
-
 	
 	
 	@Override
 	public void LineChartItemClicked() {
 		// TODO Auto-generated method stub
 	}
-
 
 	@Override
 	public Context getContext() {

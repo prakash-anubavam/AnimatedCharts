@@ -1,9 +1,9 @@
-package com.example.piechart;
+package com.example.animatedcharts;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.piechart.PieChartDataset.PieChartDataItem;
+import com.example.animatedcharts.PieChartDataset.PieChartDataItem;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;

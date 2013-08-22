@@ -1,4 +1,4 @@
-package com.example.piechart;
+package com.example.animatedcharts;
 
 import java.util.ArrayList;
 import java.util.List;

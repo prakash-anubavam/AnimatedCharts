@@ -1,8 +1,11 @@
-package com.example.piechart;
+package com.example.animatedcharts;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import android.animation.Animator;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -12,11 +15,13 @@ import android.graphics.Point;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 
-import com.example.piechart.LineChartDataset.LineChartDataItem;
+import com.example.animatedcharts.LineChartDataset.LineChartDataItem;
 
-public class LineChart extends View {
+public class LineChart extends View implements OnClickListener{
 
 	/**xy = top left corner coordinates*/
 	private int x; private int y;
@@ -43,13 +48,15 @@ public class LineChart extends View {
 	Paint paintAxes;
 	Paint paintGrid;
 	
-	final int TEXT_DISTANCE_FROM_AXIS = 60;
+	final int TEXT_X_DISTANCE = 60;
+	final int TEXT_Y_DISTANCE = 50;
 	final int TEXT_SIZE = 20;
 	
 	final int CURVE_TENSION = 5;
 	
 	public LineChart(LineChartParent parent, int x, int y, int width, int height, LineChartDataset dataset) {
 		super(parent.getContext());
+		this.setOnClickListener(this);
 		
 		this.x = x; this.y = y; 
 		this.width = width; this.height = height;
@@ -70,7 +77,14 @@ public class LineChart extends View {
 			maxValue = Math.max(maxValue, dataset.getItem(i).getData());
 		}
 		maxValue = Math.round(1.25 * maxValue);
+		
+		int numDigits = getDigits(maxValue);
+		
 		Log.d("maxValue", "" + maxValue);
+	}
+
+	private int getDigits(double maxValue2) {
+		return 0;
 	}
 
 	private void setPoints() {
@@ -112,20 +126,23 @@ public class LineChart extends View {
 		
 	}
 	
+
+	@Override
+	public void onClick(View arg0) {
+		Log.d("animate", "animations started");
+		animatePoints();
+		invalidate();
+	}
 	
 //////////////////////////////////////////////////////////////////////////
 //Draw
 //////////////////////////////////////////////////////////////////////////
 	@Override
 	public void draw(Canvas canvas){
-		/*
-		canvas.drawLine(x, y, x, y + height, paintAxes); //y axis
-		canvas.drawLine(x, origin.y, x + width, origin.y, paintAxes); //x axis
-		*/
 		Log.d("draw", "" + points.size());
 		
 		final int y_increment = height / Y_TICKS;
-		final int x_increment = width / X_TICKS;
+		final int x_increment = width / points.size();
 		drawYLabels(canvas, y_increment);
 		drawXLabels(canvas, x_increment);
 		drawGrid(canvas, y_increment, x_increment);
@@ -140,16 +157,18 @@ public class LineChart extends View {
 	}
 
 	private void drawYLabels(Canvas canvas, int y_increment){
-		
 		for(int i = 0; i < Y_TICKS + 1; i++){
 			String val = "" + (i * (int)maxValue/Y_TICKS);
-			canvas.drawText(val, x - TEXT_DISTANCE_FROM_AXIS, origin.y - i * y_increment, paintText);
+			canvas.drawText(val, x - TEXT_X_DISTANCE, origin.y - i * y_increment, paintText);
 		}
 	}
 	
 	private void drawXLabels(Canvas canvas, int x_increment) {
-		// TODO Auto-generated method stub
-		
+		for(int i = 0; i < points.size(); i++){
+			DataPoint dataPoint = points.get(i);
+			String val = dataPoint.getLabel();  
+			canvas.drawText(val, dataPoint.getX() - 20, origin.y + TEXT_Y_DISTANCE, paintText);
+		}
 	}
 	
 	private void drawGrid(Canvas canvas, int y_increment, int x_increment){
@@ -223,25 +242,56 @@ public class LineChart extends View {
 	public int getRealHeight(){ return realHeight; }
 	public void setWidth(int newWidth){ width = newWidth; }
 	public int getRealWidth(){ return realWidth; }
+	
+	
+//////////////////////////////////////////////////////////////////////////
+//Animate
+//////////////////////////////////////////////////////////////////////////	
+	public void animatePoints(){
+		final long DURATION = 1000;
+		
+		ArrayList<Animator> animations = new ArrayList<Animator>();
+		AnimatorSet set = new AnimatorSet();
+		
+		for(int i = 0; i < points.size(); i++){
+			DataPoint point = points.get(i);
+			int y2 = point.getReal().y;
+			
+			ObjectAnimator anim = ObjectAnimator.ofFloat(point, "radius", point.RADIUS, point.EXPAND);
+			anim.setDuration(DURATION);
+			animations.add(anim);
+		}
+		
+		set.playTogether(animations);
+		set.start();
+	}
+	
+	
+	
+	
 //////////////////////////////////////////////////////////////////////////
 //DataPoint
 //////////////////////////////////////////////////////////////////////////
 	private class DataPoint extends ShapeDrawable{
-		public int MAX_RADIUS = 10;
+		public int RADIUS = 10;
+		public int EXPAND = 30;
 		
 		private int index;
 		private String label;
 		private Point location;
+		private Point realLocation;
 		
 		/**The control point is used to determine the bezier curve that goes through
 		 * this datapoint*/
 		private Point controlPoint;
 		
-		private int radius = MAX_RADIUS; 
+		private int radius = RADIUS; 
 		Paint mPaint;
 		
 		public DataPoint(String label, int index, int x, int y){
 			location = new Point(x, y);
+			realLocation = new Point(x,y);
+			
 			this.index = index;
 			this.label = label;
 			
@@ -257,21 +307,27 @@ public class LineChart extends View {
 			mPaint.setColor(Color.WHITE);
 			mPaint.setStyle(Paint.Style.FILL);
 			canvas.drawCircle(location.x, location.y, radius, mPaint);
-			mPaint.setColor(Color.GRAY);
+			
+			mPaint.setColor(Color.BLACK);
 			mPaint.setStyle(Paint.Style.STROKE);
 			mPaint.setStrokeWidth(4f);
+			
 			canvas.drawCircle(location.x, location.y, radius, mPaint);
+		}
+		public void setY(float y){ 
+			location.y = (int)y;
 		}
 		
 		public Point getPoint(){ return location; }
 		public int getY(){ return location.y; }
 		public int getX(){ return location.x; }
-		public void setY(int y){ location.y = y; }
 		public int getRadius(){ return radius; }
-		public void setRadius(int r) { radius = r; } 
+		public void setRadius(float r) { radius = (int)r; }
+		public String getLabel(){ return label; }
 		
 		public void setControlPoint(Point point){ controlPoint = point; }
 		public Point getControlPoint(){ return controlPoint; }
+		public Point getReal(){ return realLocation; }
 		
 		public int getControlX(){ return controlPoint.x; }
 		public int getControlY(){ return controlPoint.y; }
@@ -283,5 +339,6 @@ public class LineChart extends View {
 		
 		public Context getContext();
 	}
+
 	
 }

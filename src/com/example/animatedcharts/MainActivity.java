@@ -1,4 +1,6 @@
-package com.example.piechart;
+package com.example.animatedcharts;
+
+import com.example.piechart.R;
 
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;

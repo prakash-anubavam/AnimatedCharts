@@ -1,4 +1,4 @@
-package com.example.piechart;
+package com.example.animatedcharts;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.example.piechart.PieChartDataset.PieChartDataItem;
+import com.example.animatedcharts.PieChartDataset.PieChartDataItem;
+import com.example.piechart.R;
 
 public class ItemListFragment extends android.support.v4.app.Fragment implements OnClickListener {
 
