@@ -31,7 +31,7 @@ public class LineChart extends View implements OnClickListener{
 	
 	private double maxValue = 0;
 	
-	final int Y_TICKS = 5;
+	int y_ticks = 5;
 	final int X_TICKS = 10;
 	
 	final float STROKE_WIDTH = 6f;
@@ -76,15 +76,28 @@ public class LineChart extends View implements OnClickListener{
 		for(int i = 0; i < dataset.size(); i++){
 			maxValue = Math.max(maxValue, dataset.getItem(i).getData());
 		}
-		maxValue = Math.round(1.25 * maxValue);
+		Log.d("maxValue", "highestdatapoint: " + maxValue);
+		
+		maxValue = Math.round(1.1 * maxValue);
+		Log.d("maxValue", "x 1.1: " + maxValue);
 		
 		int numDigits = getDigits(maxValue);
+		int specificity = Math.max(numDigits - 2, 1);
+		int divisor = (int)Math.pow(10, (specificity));
+		Log.d("maxValue", "divisor: " + divisor);
 		
-		Log.d("maxValue", "" + maxValue);
+		int upTo = divisor;
+		while(upTo < maxValue){
+			upTo += (divisor);
+		}
+		maxValue = upTo;
+		
+		Log.d("maxValue", "divisored up: " + maxValue);
 	}
 
-	private int getDigits(double maxValue2) {
-		return 0;
+	private int getDigits(double input) {
+		if(input / 10 < 1) return 1;
+		else return 1 + getDigits(input / 10);
 	}
 
 	private void setPoints() {
@@ -140,12 +153,15 @@ public class LineChart extends View implements OnClickListener{
 	@Override
 	public void draw(Canvas canvas){
 		Log.d("draw", "" + points.size());
+		setYTicks();
 		
-		final int y_increment = height / Y_TICKS;
-		final int x_increment = width / points.size();
+		int y_increment = height / y_ticks;
+		int x_increment = width / X_TICKS;
+		drawGrid(canvas, y_increment, x_increment);
+		
+		x_increment = width / points.size();
 		drawYLabels(canvas, y_increment);
 		drawXLabels(canvas, x_increment);
-		drawGrid(canvas, y_increment, x_increment);
 		
 		if(points.size() >= 2){  	//no lines to draw
 			drawConnections(canvas);
@@ -156,9 +172,26 @@ public class LineChart extends View implements OnClickListener{
 		}
 	}
 
+	private void setYTicks() {
+		int digits = getDigits(maxValue);
+		double smaller = maxValue / (Math.max(1, Math.pow(10, digits - 2)));
+		
+		double divisor = 5;
+		while(divisor <= 9){
+			if(smaller % divisor == 0) break;
+			divisor++;
+		}
+		if(divisor >= 9){
+			maxValue += Math.pow(10,  Math.max((digits -1),1));
+			setYTicks();
+		}
+		
+		y_ticks = (int)divisor;
+	}
+
 	private void drawYLabels(Canvas canvas, int y_increment){
-		for(int i = 0; i < Y_TICKS + 1; i++){
-			String val = "" + (i * (int)maxValue/Y_TICKS);
+		for(int i = 0; i < y_ticks + 1; i++){
+			String val = "" + (i * (int)maxValue/y_ticks);
 			canvas.drawText(val, x - TEXT_X_DISTANCE, origin.y - i * y_increment, paintText);
 		}
 	}
@@ -173,7 +206,7 @@ public class LineChart extends View implements OnClickListener{
 	
 	private void drawGrid(Canvas canvas, int y_increment, int x_increment){
 		//draw y ticks
-		for(int i = 0; i <= Y_TICKS; i++){
+		for(int i = 0; i <= y_ticks; i++){
 			Point left = new Point(origin.x, origin.y- y_increment * i);
 			Point right = new Point(origin.x + width, origin.y - y_increment * i);
 			canvas.drawLine(left.x, left.y, right.x,  right.y, paintGrid);

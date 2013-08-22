@@ -8,6 +8,17 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".ItemListFragment" >
 
+    <ScrollView 
+        android:id="@+id/scroll"
+        android:layout_width = "fill_parent"
+        android:layout_height = "wrap_content"
+        android:layout_above = "@+id/new_data_button">
+    
+    <RelativeLayout
+        android:id="@+id/items"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+       															 
     <TextView
         android:id="@+id/item1"
         android:layout_width="wrap_content"
@@ -60,6 +71,10 @@
         android:layout_below="@+id/item4"
         android:gravity="left"
         android:text="Item 5:" />
+    </RelativeLayout>
+    
+        
+    </ScrollView>
 
     <Button
         android:id="@+id/new_data_button"

@@ -70,11 +70,11 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	private HashMap<String, Double> generateData() {
 		HashMap<String, Double> map =  new HashMap<String, Double>();
 		rand = new Random();
-		final int MAX_ITEM = 5000;
+		final int powerOf10 = rand.nextInt(4) + 1;
 		final int numItems = rand.nextInt(3) + 3;
 		
 		for(int i = 0; i < numItems; i++){
-			Double d = ((double)rand.nextInt(MAX_ITEM));
+			Double d = ((double)rand.nextInt((int)Math.pow(10, powerOf10)));
 			String s = "Item " + i;
 			map.put(s, d);
 		}
@@ -92,6 +92,7 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	
 	public void inflateArc(int item){
 		pc.inflateArcIndex(item);
+		
 	}
 	
 	public void newData(){
