@@ -12,6 +12,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.graphics.RectF;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.os.Handler;
@@ -84,7 +85,7 @@ public class LineChart extends View implements OnTouchListener{
 		
 		setPoints();
 		
-		animateGrid();
+		animatePoints();
 	}
 	
 	private void getMax() {
@@ -172,7 +173,7 @@ public class LineChart extends View implements OnTouchListener{
 	public void draw(Canvas canvas){
 		invalidate();
 		setYTicks();
-		Log.d("current", "current width " + currentWidth);
+
 		int y_increment = currentHeight / y_ticks;
 		int x_increment = currentWidth / X_TICKS;
 		drawGrid(canvas, y_increment, x_increment);
@@ -450,6 +451,7 @@ public class LineChart extends View implements OnTouchListener{
 		private static final long ANIM_DURATION = 200;
 		public final float NORMAL_RADIUS = 10;
 		public final float EXPAND_RADIUS = 20;
+		final int APPROX_DIGIT_WIDTH = 20;
 		
 		private int index;
 		private String label;
@@ -470,6 +472,8 @@ public class LineChart extends View implements OnTouchListener{
 		private float radius = NORMAL_RADIUS; 
 		Paint paintPoint;
 		Paint paintText;
+		Paint paintBox;
+		Paint paintBoxInside;
 		
 		public LinePoint(String label, double data, int index, int x, int y){
 			location = new Point(x, y);
@@ -507,6 +511,16 @@ public class LineChart extends View implements OnTouchListener{
 			paintText = new Paint();
 			paintText.setColor(Color.BLACK);
 			paintText.setTextSize(TEXT_SIZE * 2);
+			
+			paintBox = new Paint();
+			paintBox.setColor(Color.BLACK);
+			paintBox.setStyle(Paint.Style.STROKE);
+			paintBox.setStrokeWidth(STROKE_WIDTH);
+			
+			paintBoxInside = new Paint();
+			paintBoxInside.setColor(Color.WHITE);
+			paintBoxInside.setStyle(Paint.Style.FILL);
+			
 		}
 
 		private void setPaintOutter() {
@@ -539,7 +553,41 @@ public class LineChart extends View implements OnTouchListener{
 		private void drawText(Canvas canvas) {
 			//set the alpha to the proportion that the expand animation is done- simulate fade in
 			paintText.setAlpha( (int) ((1 - (EXPAND_RADIUS - radius) / (EXPAND_RADIUS - NORMAL_RADIUS)) * 255));
-			canvas.drawText("" + (int)data, location.x + (int)(TEXT_X_DISTANCE * .75), location.y + NORMAL_RADIUS, paintText);
+						
+			int xOffset = (int)(TEXT_X_DISTANCE * .75);
+			int numDigits = getDigits(data);
+
+			boolean closeToRightEdge = (origin.x + realWidth) - location.x < realWidth * .25;
+			
+
+			//Put text on the left side instead
+			if(closeToRightEdge){
+				xOffset = (int) (-xOffset - (APPROX_DIGIT_WIDTH *numDigits));
+			}
+			
+			RectF rect = getRect(closeToRightEdge, numDigits);
+			
+			canvas.drawRoundRect(rect, radius, radius, paintBoxInside);
+			canvas.drawRoundRect(rect, radius, radius, paintBox);
+			
+			canvas.drawText("" + (int)data, location.x + xOffset, location.y + NORMAL_RADIUS, paintText);
+		}
+		
+		private RectF getRect(boolean close, int numDigits){
+			float top = (float) (location.y - radius * 1.5);
+			float bot = (float) (location.y + radius * 1.5);
+			float left = 0; float right = 0;
+			
+			if(close){
+				left = location.x - TEXT_X_DISTANCE - (numDigits + 1) * APPROX_DIGIT_WIDTH;
+				right = (float) (location.x - TEXT_X_DISTANCE * .5);
+			}
+			else{
+				left = (float) (location.x + TEXT_X_DISTANCE * .5);
+				right = location.x + TEXT_X_DISTANCE + (numDigits + 1) * APPROX_DIGIT_WIDTH;
+			}
+			
+			return new RectF(left, top, right, bot);
 		}
 		
 //Boilerplate
