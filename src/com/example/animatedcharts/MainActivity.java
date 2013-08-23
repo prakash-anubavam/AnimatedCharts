@@ -1,11 +1,13 @@
 package com.example.animatedcharts;
 
-import com.example.piechart.R;
+import java.util.Map;
 
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
+
+import com.example.piechart.R;
 
 public class MainActivity extends FragmentActivity {
 
@@ -29,18 +31,19 @@ public class MainActivity extends FragmentActivity {
 		return true;
 	}
 	
-	public void setData(PieChartDataset dataset){
-		itemFrag.setData(dataset);
+	public void setData(Map<String, Double> data){
+		itemFrag.setData(data);
 		
 	}
 	
-	public void arcClicked(int arcIndex){
+	public void chartItemClicked(int arcIndex){
 		itemFrag.boldItem(arcIndex);
 	}
 
 	public void listItemClicked(int itemIndex) {
 		Log.d("item click", "" + itemIndex);
 		chartFrag.inflateArc(itemIndex);
+		chartFrag.inflatePoint(itemIndex);
 	}
 	
 	public void newDataButtonClicked(){

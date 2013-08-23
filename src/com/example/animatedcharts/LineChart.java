@@ -443,6 +443,18 @@ public class LineChart extends View implements OnTouchListener{
 		return true;
 	}
 	
+	public void inflatePoint(int which){
+		for(int i = 0; i < points.size(); i++){
+			LinePoint point = points.get(i);
+			if(point.getIndex() == which && !point.isExpanded()){
+				point.expandOrDeflate();
+			}
+			else if(point.isExpanded()){
+				point.expandOrDeflate();
+			}
+		}
+	}
+	
 	
 //////////////////////////////////////////////////////////////////////////
 //DataPoint
@@ -573,6 +585,7 @@ public class LineChart extends View implements OnTouchListener{
 			canvas.drawText("" + (int)data, location.x + xOffset, location.y + NORMAL_RADIUS, paintText);
 		}
 		
+		/**Get the rectangle that the text fits in*/
 		private RectF getRect(boolean close, int numDigits){
 			float top = (float) (location.y - radius * 1.5);
 			float bot = (float) (location.y + radius * 1.5);
@@ -621,8 +634,7 @@ public class LineChart extends View implements OnTouchListener{
 		public int getIndex() { return index; }
 	}
 	
-	/**Any container using a LineChart must implement this interface
-	 */
+	/**Any container using a LineChart must implement this interface*/
 	public interface LineChartParent{
 		public void LineChartItemClicked(int which);
 		

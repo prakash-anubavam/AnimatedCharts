@@ -1,7 +1,8 @@
 package com.example.animatedcharts;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
+import java.util.Map;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -14,7 +15,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.example.animatedcharts.PieChartDataset.PieChartDataItem;
 import com.example.piechart.R;
 
 public class ItemListFragment extends android.support.v4.app.Fragment implements OnClickListener {
@@ -56,20 +56,20 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 	}
 
 	//TODO turn this into listview manipulations
-	public void setData(PieChartDataset dataset) {
+	public void setData(Map<String, Double> data) {
 		setViews();
 		
-		List<PieChartDataItem> items = dataset.getData();
-		for(int i = 0; i < items.size(); i++){
-			PieChartDataItem item = items.get(i);
+		Iterator<String> it = data.keySet().iterator();
+		
+		for(int i = 0; i < data.size(); i++){
 			TextView view = dataViews.get(i);
-			int percentage = (int)Math.round(item.getPercentage() * 100);
-			String str = String.format("%s: %s, %s", 
-					item.getLabel(), (int)item.getData(), percentage);
-			view.setText(str + "%");
+			String label = it.next();
+			
+			String str = String.format("%s: %s", 
+					label, data.get(label));
+			view.setText(str);
 			view.setVisibility(View.VISIBLE);
 		}
-		
 	}
 
 	@Override

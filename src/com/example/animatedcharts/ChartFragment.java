@@ -18,8 +18,9 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	LineChart lc;
 	ViewGroup container;
 	Random rand;
-	PieChartDataset data;
-
+	PieChartDataset pieData;
+	HashMap<String, Double> map;
+	
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
@@ -64,11 +65,11 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 		container.addView(lc);
 		//pc.replayAnimation();
 		
-		((MainActivity)getActivity()).setData(dataset);
+		((MainActivity)getActivity()).setData(map);
 	}
 
 	private HashMap<String, Double> generateData() {
-		HashMap<String, Double> map =  new HashMap<String, Double>();
+		map =  new HashMap<String, Double>();
 		rand = new Random();
 		final int powerOf10 = rand.nextInt(4) + 1;
 		final int numItems = rand.nextInt(3) + 3;
@@ -82,27 +83,29 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 		return map;
 	}
 	
-	public PieChartDataset getData(){
-		return data;
+	public HashMap<String, Double> getData(){
+		return map;
 	}
 	
 	public void arcClicked(int arcIndex){
-		((MainActivity)getActivity()).arcClicked(arcIndex);
+		((MainActivity)getActivity()).chartItemClicked(arcIndex);
 	}
 	
 	public void inflateArc(int item){
 		pc.inflateArcIndex(item);
-		
+	}
+	
+	public void inflatePoint(int item){
+		lc.inflatePoint(item);
 	}
 	
 	public void newData(){
 		initCharts();
 	}
 	
-	
 	@Override
-	public void LineChartItemClicked(int which) {
-		// TODO Auto-generated method stub
+	public void LineChartItemClicked(int pointIndex) {
+		((MainActivity)getActivity()).chartItemClicked(pointIndex);
 	}
 
 	@Override
