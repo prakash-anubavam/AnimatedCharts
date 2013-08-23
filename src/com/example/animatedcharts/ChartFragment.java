@@ -76,7 +76,7 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 		
 		for(int i = 0; i < numItems; i++){
 			Double d = ((double)rand.nextInt((int)Math.pow(10, powerOf10)));
-			String s = "Item " + i;
+			String s = "Item " + (i +1) ;
 			map.put(s, d);
 		}
 		

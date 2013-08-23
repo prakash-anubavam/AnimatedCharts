@@ -80,7 +80,7 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 			return;
 		}
 		int item = Integer.parseInt(((TextView)view).getText().toString().substring(5, 6));
-		
+		item--;
 		((MainActivity)getActivity()).listItemClicked(item);
 		
 		boldItem(item);
