@@ -55,6 +55,7 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 		}
 	}
 
+	//TODO turn this into listview manipulations
 	public void setData(PieChartDataset dataset) {
 		setViews();
 		

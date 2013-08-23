@@ -18,6 +18,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 
 import com.example.animatedcharts.LineChartDataset.LineChartDataItem;
@@ -34,6 +35,8 @@ public class LineChart extends View implements OnClickListener{
 	
 	int y_ticks = 5;
 	final int X_TICKS = 10;
+	private int fillAlpha = 0;
+	private final float FULL_FILL_ALPHA = 100; 
 	
 	final float STROKE_WIDTH = 6f;
 	
@@ -48,6 +51,7 @@ public class LineChart extends View implements OnClickListener{
 	Paint paintTicks;
 	Paint paintAxes;
 	Paint paintGrid;
+	Paint paintFill;
 	
 	final int TEXT_X_DISTANCE = 60;
 	final int TEXT_Y_DISTANCE = 50;
@@ -132,7 +136,7 @@ public class LineChart extends View implements OnClickListener{
 		
 
 		paintText = new Paint();
-		paintText.setColor(Color.BLACK);
+		paintText.setColor(Color.GRAY);
 		paintText.setStrokeWidth(STROKE_WIDTH);
 		paintText.setTextSize(TEXT_SIZE);
 		
@@ -145,6 +149,10 @@ public class LineChart extends View implements OnClickListener{
 		paintGrid.setColor(Color.GRAY);
 		paintGrid.setStyle(Paint.Style.STROKE);
 		paintGrid.setStrokeWidth(STROKE_WIDTH/4);
+		
+		paintFill = new Paint();
+		paintFill.setColor(Color.GRAY);
+		paintFill.setStyle(Paint.Style.FILL);
 		
 	}
 	
@@ -181,6 +189,9 @@ public class LineChart extends View implements OnClickListener{
 		}
 	}
 
+	/**Determine how many "ticks" will be on the y axis.
+	 * The algorithm essentially wants to make the numbers at the
+	 * ticks look as clean as possible- more 0s, more even looking divisions.*/
 	private void setYTicks() {
 		
 		int digits = getDigits(maxValue);
@@ -239,9 +250,11 @@ public class LineChart extends View implements OnClickListener{
 		}
 	}
 
+	/**Draw the path connecting the points */
 	private void drawConnections(Canvas canvas) {
 		
-		Path path = new Path();
+		Path connectingPath = new Path();
+
 		int size = points.size();
 		if(size <= 1) return;
 		
@@ -249,18 +262,19 @@ public class LineChart extends View implements OnClickListener{
 		
 		DataPoint first = points.get(0);
 		
-		path.moveTo(first.getX(),  first.getY());
+		connectingPath.moveTo(first.getX(),  first.getY());
 		
 		for(int i = 1; i < size; i++){
 			DataPoint current = points.get(i);
 			DataPoint prev = points.get(i- 1);
 			
-			path.cubicTo(prev.getControlX() + prev.getX(), prev.getControlY() + prev.getY(), 
+			connectingPath.cubicTo(prev.getControlX() + prev.getX(), prev.getControlY() + prev.getY(), 
 					current.getX() - current.getControlX(), current.getY() - current.getControlY(),
 					current.getX(), current.getY());
 		}
 		
-		canvas.drawPath(path, paintLines);
+		drawFill(canvas, connectingPath, first);		
+		canvas.drawPath(connectingPath, paintLines);
 	}
 
 	/**We're going to use Bezier curves to path through the points smoothly. 
@@ -268,26 +282,47 @@ public class LineChart extends View implements OnClickListener{
 	 * determine its curve later.
 	 */
 	private void setControlPoints(int size) {
+		
+		//set first point's control point
 		DataPoint first = points.get(0);
 		DataPoint second = points.get(1);
 		first.setControlPoint(new Point(
 				(second.getX() - first.getX())/CURVE_TENSION,
 				(second.getY() - first.getY())/CURVE_TENSION));
 		
+		//set middle points' control points
 		for(int i = 1; i < size - 1; i++){
 			Point before = points.get(i -1).getPoint();
 			Point after = points.get(i + 1).getPoint();
 			Point control = new Point();
+			
 			control.x = (after.x - before.x)/CURVE_TENSION;
 			control.y = (after.y - before.y)/CURVE_TENSION;
 			points.get(i).setControlPoint(control);
 		}
 		
+		//set last point's control point
 		DataPoint last = points.get(size -1);
 		DataPoint penul = points.get(size -2);
 		last.setControlPoint(new Point(
 				(last.getX() - penul.getX())/CURVE_TENSION,
 				(last.getY() - penul.getY())/CURVE_TENSION));
+	}
+	
+	/**Fill the area underneath the line*/
+	private void drawFill(Canvas canvas, Path connectingPath, DataPoint first) {
+		
+		//The fill path follows the same connections between the points,
+		//and then creates a closed figure on the bottom part of the grid
+		Path fillPath = new Path();
+		fillPath.addPath(connectingPath);
+		fillPath.lineTo(origin.x + width, origin.y);
+		fillPath.lineTo(origin.x, origin.y);
+		fillPath.lineTo(first.getX(), first.getY());
+		
+		paintFill.setAlpha(fillAlpha);
+		
+		canvas.drawPath(fillPath, paintFill);
 	}
 	
 	public void setHeight(int newHeight){ height = newHeight; }
@@ -300,7 +335,7 @@ public class LineChart extends View implements OnClickListener{
 //Animate
 //////////////////////////////////////////////////////////////////////////	
 	public void animatePoints(){
-		final long DURATION = 500;
+		final long DURATION = 800;
 		
 		ArrayList<Animator> upAnimations = new ArrayList<Animator>();
 		ArrayList<Animator> fadeAnimations = new ArrayList<Animator>();
@@ -322,24 +357,28 @@ public class LineChart extends View implements OnClickListener{
 			fadeAnimations.add(fade);
 		}
 		
-		AnimatorSet both = new AnimatorSet();
-		
 		upSet.playTogether(upAnimations);
 		fadeSet.playTogether(fadeAnimations);
 		
+		final ObjectAnimator fillFadeIn = ObjectAnimator.ofFloat(this, "fillAlpha", 0f, FULL_FILL_ALPHA);
+		fillFadeIn.setDuration(DURATION);
+		fillFadeIn.setInterpolator(new DecelerateInterpolator());
+		
 		upSet.start();
 		fadeSet.start();
-		/*Handler handler = new Handler();
+		Handler handler = new Handler();
 		handler.postDelayed(new Runnable() {
 			
 			@Override
 			public void run() {
-				fadeSet.start();
+				fillFadeIn.start();
 			}
-		}, (long)(DURATION * .75));*/
+		}, (long)(DURATION * .75));
 	}
 	
-	
+	public void setFillAlpha(float val){
+		fillAlpha = (int)val;
+	}
 	
 	
 //////////////////////////////////////////////////////////////////////////
@@ -353,7 +392,8 @@ public class LineChart extends View implements OnClickListener{
 		private String label;
 		private Point location;
 		private Point realLocation;
-		private int alpha;
+		private int circleAlpha = 0;
+		public final int FULL_CIRCLE_ALPHA = 255;
 		
 		/**The control point is used to determine the bezier curve that goes through
 		 * this datapoint*/
@@ -382,7 +422,7 @@ public class LineChart extends View implements OnClickListener{
 			mPaint.setStyle(Paint.Style.FILL);
 			canvas.drawCircle(location.x, location.y, radius, mPaint);
 			
-			mPaint.setAlpha(alpha);
+			mPaint.setAlpha(circleAlpha);
 			mPaint.setColor(Color.BLACK);
 			mPaint.setStyle(Paint.Style.STROKE);
 			mPaint.setStrokeWidth(4f);
@@ -393,10 +433,10 @@ public class LineChart extends View implements OnClickListener{
 			location.y = (int)y;
 		}
 		
-		public void setAlpha(float val){
-			alpha = (int) (255 * val);
+		public void setCircleAlpha(float val){
+			circleAlpha = (int) (255 * val);
 		}
-		public int getAlpha(){ return alpha; }
+		public int getAlpha(){ return circleAlpha; }
 		
 		public Point getPoint(){ return location; }
 		public int getY(){ return location.y; }
