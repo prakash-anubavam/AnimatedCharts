@@ -16,14 +16,15 @@ import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.os.Handler;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 
 import com.example.animatedcharts.LineChartDataset.LineChartDataItem;
 
-public class LineChart extends View implements OnClickListener{
+public class LineChart extends View implements OnTouchListener{
 
 	/**xy = top left corner coordinates*/
 	private int x; private int y;
@@ -33,10 +34,13 @@ public class LineChart extends View implements OnClickListener{
 	
 	private double maxValue = 0;
 	
+	private LineChartParent parent;
+	
 	int y_ticks = 5;
 	final int X_TICKS = 10;
 	private int fillAlpha = 0;
 	private final float FULL_FILL_ALPHA = 100; 
+	private int numPoints;
 	
 	final float STROKE_WIDTH = 6f;
 	
@@ -61,7 +65,8 @@ public class LineChart extends View implements OnClickListener{
 	
 	public LineChart(LineChartParent parent, int x, int y, int width, int height, LineChartDataset dataset) {
 		super(parent.getContext());
-		this.setOnClickListener(this);
+		this.setOnTouchListener(this);
+		this.parent = parent;
 		
 		this.x = x; this.y = y; 
 		this.width = width; this.height = height;
@@ -70,6 +75,7 @@ public class LineChart extends View implements OnClickListener{
 		origin = new Point(x, y + height);
 		
 		this.dataset = dataset;
+		numPoints = dataset.size();
 		
 		getMax();
 		initPaints();
@@ -153,16 +159,8 @@ public class LineChart extends View implements OnClickListener{
 		paintFill = new Paint();
 		paintFill.setColor(Color.GRAY);
 		paintFill.setStyle(Paint.Style.FILL);
-		
 	}
-	
 
-	@Override
-	public void onClick(View arg0) {
-		Log.d("animate", "animations started");
-		animatePoints();
-		invalidate();
-	}
 	
 //////////////////////////////////////////////////////////////////////////
 //Draw
@@ -197,19 +195,15 @@ public class LineChart extends View implements OnClickListener{
 		int digits = getDigits(maxValue);
 		int smaller = (int) (maxValue / (Math.max(1, Math.pow(10, digits - 2))));
 		
-		Log.d("ticks", "smaller: " + smaller);
-		
 		double divisor = 5;
 		while(divisor <= 9){
 			if(smaller % divisor == 0) break;
 			divisor++;
 		}
 		
-		Log.d("ticks", "divisor: " + divisor);
 		if(divisor >= 9){
 			double add = Math.pow(10,  Math.max((digits -1),1));
 			
-			Log.d("ticks", "add: " + add);
 			maxValue += add;
 			setYTicks();
 			
@@ -352,9 +346,9 @@ public class LineChart extends View implements OnClickListener{
 			up.setInterpolator(new OvershootInterpolator());
 			upAnimations.add(up);
 			
-			ObjectAnimator fade = ObjectAnimator.ofFloat(point, "alpha", 0f, 1f);
-			fade.setDuration(DURATION);
-			fadeAnimations.add(fade);
+			ObjectAnimator pointFade = ObjectAnimator.ofFloat(point, "circleAlpha", 0f, point.getFullAlpha());
+			pointFade.setDuration(DURATION/4);
+			fadeAnimations.add(pointFade);
 		}
 		
 		upSet.playTogether(upAnimations);
@@ -365,13 +359,13 @@ public class LineChart extends View implements OnClickListener{
 		fillFadeIn.setInterpolator(new DecelerateInterpolator());
 		
 		upSet.start();
-		fadeSet.start();
 		Handler handler = new Handler();
 		handler.postDelayed(new Runnable() {
 			
 			@Override
 			public void run() {
 				fillFadeIn.start();
+				fadeSet.start();
 			}
 		}, (long)(DURATION * .75));
 	}
@@ -380,27 +374,69 @@ public class LineChart extends View implements OnClickListener{
 		fillAlpha = (int)val;
 	}
 	
+	//Touch
+	@Override
+	public boolean onTouch(View view, MotionEvent event) {
+		if(event.getAction() != MotionEvent.ACTION_DOWN) return false;
+
+		Point touchPoint = new Point((int)event.getX(), (int)event.getY()); 		
+		Log.d("touch", "touched at " + touchPoint);
+		
+		for(int i = 0; i < points.size(); i++){
+			DataPoint point = points.get(i);
+			
+			//describe a bounding rectangle for simplicity
+			final double BUFFER = 5;
+			int left = (int) (point.getX() - (point.getRadius() * BUFFER)); 
+			int right  = (int) (point.getX() + (point.getRadius() * BUFFER));
+			int down = (int) (point.getY() + (point.getRadius() * BUFFER));
+			int up = (int) (point.getY() - (point.getRadius() * BUFFER));
+			
+			boolean inside = touchPoint.x > left && touchPoint.x < right
+					&& touchPoint.y < down && touchPoint.y > up;
+					
+			boolean expanded = point.isExpanded();
+			if(inside && !expanded){
+				int index = point.getIndex();
+				Log.d("touch", "expanding " + index);
+				point.expandOrDeflate();
+				parent.LineChartItemClicked(index);
+			}
+			
+			else if(expanded){
+				point.expandOrDeflate();
+			}
+		}
+		
+		return true;
+	}
+	
 	
 //////////////////////////////////////////////////////////////////////////
 //DataPoint
 //////////////////////////////////////////////////////////////////////////
 	private class DataPoint extends ShapeDrawable{
-		public int RADIUS = 10;
-		public int EXPAND = 30;
+		private static final long ANIM_DURATION = 200;
+		public float RADIUS = 10;
+		public float EXPAND = 20;
 		
 		private int index;
 		private String label;
 		private Point location;
 		private Point realLocation;
+		
+		private boolean expanded = false;
+		
 		private int circleAlpha = 0;
-		public final int FULL_CIRCLE_ALPHA = 255;
+		public final float FULL_CIRCLE_ALPHA = 255f;
+		public float getFullAlpha(){ return FULL_CIRCLE_ALPHA; }
 		
 		/**The control point is used to determine the bezier curve that goes through
 		 * this datapoint*/
 		private Point controlPoint;
 		
-		private int radius = RADIUS; 
-		Paint mPaint;
+		private float radius = RADIUS; 
+		Paint paintPoint;
 		
 		public DataPoint(String label, int index, int x, int y){
 			location = new Point(x, y);
@@ -413,35 +449,71 @@ public class LineChart extends View implements OnClickListener{
 			ovalShape.resize(radius, radius);
 			this.setShape(ovalShape);
 			
-			mPaint = new Paint();
+			initPaint();
+		}
+		
+		public void expandOrDeflate(){
+			float to = expanded ? RADIUS : EXPAND;
+			float from = expanded ? EXPAND : RADIUS;
+			ObjectAnimator ex = ObjectAnimator.ofFloat(this, "radius", from, to);
+			ex.setDuration(ANIM_DURATION);
+			ex.start();
+			expanded = !expanded;
+		}
+		
+		public boolean isExpanded(){
+			return expanded;
+		}
+
+		private void initPaint() {
+			paintPoint = new Paint();
+			setPaintInner();
+			setPaintOutter();
+		}
+
+		private void setPaintOutter() {
+			paintPoint.setColor(Color.BLACK);
+			paintPoint.setStyle(Paint.Style.STROKE);
+			paintPoint.setStrokeWidth(4f);
+		}
+
+		private void setPaintInner() {
+			paintPoint.setColor(Color.WHITE);
+			paintPoint.setStyle(Paint.Style.FILL);
 		}
 		
 		@Override 
 		public void draw(Canvas canvas){
-			mPaint.setColor(Color.WHITE);
-			mPaint.setStyle(Paint.Style.FILL);
-			canvas.drawCircle(location.x, location.y, radius, mPaint);
 			
-			mPaint.setAlpha(circleAlpha);
-			mPaint.setColor(Color.BLACK);
-			mPaint.setStyle(Paint.Style.STROKE);
-			mPaint.setStrokeWidth(4f);
+			setPaintInner();
+			paintPoint.setAlpha(circleAlpha);
+			canvas.drawCircle(location.x, location.y, radius, paintPoint);
 			
-			canvas.drawCircle(location.x, location.y, radius, mPaint);
+			setPaintOutter();
+			paintPoint.setAlpha(circleAlpha);
+			canvas.drawCircle(location.x, location.y, radius, paintPoint);
 		}
+		
+		
+		
+//Boilerplate
 		public void setY(float y){ 
 			location.y = (int)y;
 		}
 		
+		public void setX(float x){
+			location.x = (int)x;
+		}
+		
 		public void setCircleAlpha(float val){
-			circleAlpha = (int) (255 * val);
+			circleAlpha = (int) val;
 		}
 		public int getAlpha(){ return circleAlpha; }
 		
 		public Point getPoint(){ return location; }
 		public int getY(){ return location.y; }
 		public int getX(){ return location.x; }
-		public int getRadius(){ return radius; }
+		public float getRadius(){ return radius; }
 		public void setRadius(float r) { radius = (int)r; }
 		public String getLabel(){ return label; }
 		
@@ -451,11 +523,14 @@ public class LineChart extends View implements OnClickListener{
 		
 		public int getControlX(){ return controlPoint.x; }
 		public int getControlY(){ return controlPoint.y; }
+		
+		public int getIndex() { return index; }
 	}
 	
-	
+	/**Any container using a LineChart must implement this interface
+	 */
 	public interface LineChartParent{
-		public void LineChartItemClicked();
+		public void LineChartItemClicked(int which);
 		
 		public Context getContext();
 	}

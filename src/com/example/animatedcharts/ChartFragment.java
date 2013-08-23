@@ -101,7 +101,7 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	
 	
 	@Override
-	public void LineChartItemClicked() {
+	public void LineChartItemClicked(int which) {
 		// TODO Auto-generated method stub
 	}
 
