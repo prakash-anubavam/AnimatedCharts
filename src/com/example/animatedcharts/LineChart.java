@@ -46,7 +46,7 @@ public class LineChart extends View implements OnTouchListener{
 	
 	LineChartDataset dataset;
 	
-	private List<DataPoint> points;
+	private List<LinePoint> points;
 	
 	private Point origin;
 	
@@ -116,7 +116,7 @@ public class LineChart extends View implements OnTouchListener{
 	}
 
 	private void setPoints() {
-		points = new ArrayList<DataPoint>();
+		points = new ArrayList<LinePoint>();
 		
 		int size = dataset.size();
 		int x_offset = width/(size - 1);
@@ -126,11 +126,13 @@ public class LineChart extends View implements OnTouchListener{
 		for(int i = 0; i < size; i++){
 			LineChartDataItem item = dataset.getItem(i);
 			pointX = x + (i * x_offset); 
-			pointY = (int)Math.round((origin.y) - (item.getData() / maxValue) * height);
-			points.add(new DataPoint("Item: " + i, i, pointX, pointY));
+			double data = item.getData();
+			pointY = (int)Math.round((origin.y) - (data / maxValue) * height);
+			
+			points.add(new LinePoint(item.getLabel(), data, i, pointX, pointY));
 		}
 		
-		for(DataPoint point : points){
+		for(LinePoint point : points){
 			point.setY(origin.y);
 		}
 	}
@@ -139,7 +141,6 @@ public class LineChart extends View implements OnTouchListener{
 		paintAxes = new Paint();
 		paintAxes.setColor(Color.BLACK);
 		paintAxes.setStrokeWidth(STROKE_WIDTH);
-		
 
 		paintText = new Paint();
 		paintText.setColor(Color.GRAY);
@@ -182,7 +183,7 @@ public class LineChart extends View implements OnTouchListener{
 			drawConnections(canvas);
 		}
 		
-		for(DataPoint point : points){
+		for(LinePoint point : points){
 			point.draw(canvas);
 		}
 	}
@@ -222,7 +223,7 @@ public class LineChart extends View implements OnTouchListener{
 	
 	private void drawXLabels(Canvas canvas, int x_increment) {
 		for(int i = 0; i < points.size(); i++){
-			DataPoint dataPoint = points.get(i);
+			LinePoint dataPoint = points.get(i);
 			String val = dataPoint.getLabel();  
 			canvas.drawText(val, dataPoint.getX() - 20, origin.y + TEXT_Y_DISTANCE, paintText);
 		}
@@ -254,13 +255,13 @@ public class LineChart extends View implements OnTouchListener{
 		
 		setControlPoints(size);
 		
-		DataPoint first = points.get(0);
+		LinePoint first = points.get(0);
 		
 		connectingPath.moveTo(first.getX(),  first.getY());
 		
 		for(int i = 1; i < size; i++){
-			DataPoint current = points.get(i);
-			DataPoint prev = points.get(i- 1);
+			LinePoint current = points.get(i);
+			LinePoint prev = points.get(i- 1);
 			
 			connectingPath.cubicTo(prev.getControlX() + prev.getX(), prev.getControlY() + prev.getY(), 
 					current.getX() - current.getControlX(), current.getY() - current.getControlY(),
@@ -278,8 +279,8 @@ public class LineChart extends View implements OnTouchListener{
 	private void setControlPoints(int size) {
 		
 		//set first point's control point
-		DataPoint first = points.get(0);
-		DataPoint second = points.get(1);
+		LinePoint first = points.get(0);
+		LinePoint second = points.get(1);
 		first.setControlPoint(new Point(
 				(second.getX() - first.getX())/CURVE_TENSION,
 				(second.getY() - first.getY())/CURVE_TENSION));
@@ -296,20 +297,21 @@ public class LineChart extends View implements OnTouchListener{
 		}
 		
 		//set last point's control point
-		DataPoint last = points.get(size -1);
-		DataPoint penul = points.get(size -2);
+		LinePoint last = points.get(size -1);
+		LinePoint penul = points.get(size -2);
 		last.setControlPoint(new Point(
 				(last.getX() - penul.getX())/CURVE_TENSION,
 				(last.getY() - penul.getY())/CURVE_TENSION));
 	}
 	
 	/**Fill the area underneath the line*/
-	private void drawFill(Canvas canvas, Path connectingPath, DataPoint first) {
+	private void drawFill(Canvas canvas, Path connectingPath, LinePoint first) {
 		
 		//The fill path follows the same connections between the points,
 		//and then creates a closed figure on the bottom part of the grid
 		Path fillPath = new Path();
 		fillPath.addPath(connectingPath);
+		fillPath.lineTo(origin.x + width, points.get(numPoints-1).getY());
 		fillPath.lineTo(origin.x + width, origin.y);
 		fillPath.lineTo(origin.x, origin.y);
 		fillPath.lineTo(first.getX(), first.getY());
@@ -328,6 +330,10 @@ public class LineChart extends View implements OnTouchListener{
 //////////////////////////////////////////////////////////////////////////
 //Animate
 //////////////////////////////////////////////////////////////////////////	
+	public void animateGrid(){
+		final long GRID_DURATION = 800;
+		
+	}
 	public void animatePoints(){
 		final long DURATION = 800;
 		
@@ -338,7 +344,7 @@ public class LineChart extends View implements OnTouchListener{
 		final AnimatorSet fadeSet = new AnimatorSet();
 		
 		for(int i = 0; i < points.size(); i++){
-			DataPoint point = points.get(i);
+			LinePoint point = points.get(i);
 			int y2 = point.getReal().y;
 			
 			ObjectAnimator up = ObjectAnimator.ofFloat(point, "y", origin.y, y2);
@@ -383,7 +389,7 @@ public class LineChart extends View implements OnTouchListener{
 		Log.d("touch", "touched at " + touchPoint);
 		
 		for(int i = 0; i < points.size(); i++){
-			DataPoint point = points.get(i);
+			LinePoint point = points.get(i);
 			
 			//describe a bounding rectangle for simplicity
 			final double BUFFER = 5;
@@ -415,13 +421,14 @@ public class LineChart extends View implements OnTouchListener{
 //////////////////////////////////////////////////////////////////////////
 //DataPoint
 //////////////////////////////////////////////////////////////////////////
-	private class DataPoint extends ShapeDrawable{
+	private class LinePoint extends ShapeDrawable{
 		private static final long ANIM_DURATION = 200;
-		public float RADIUS = 10;
-		public float EXPAND = 20;
+		public final float NORMAL_RADIUS = 10;
+		public final float EXPAND_RADIUS = 20;
 		
 		private int index;
 		private String label;
+		private double data;
 		private Point location;
 		private Point realLocation;
 		
@@ -435,15 +442,17 @@ public class LineChart extends View implements OnTouchListener{
 		 * this datapoint*/
 		private Point controlPoint;
 		
-		private float radius = RADIUS; 
+		private float radius = NORMAL_RADIUS; 
 		Paint paintPoint;
+		Paint paintText;
 		
-		public DataPoint(String label, int index, int x, int y){
+		public LinePoint(String label, double data, int index, int x, int y){
 			location = new Point(x, y);
 			realLocation = new Point(x,y);
 			
 			this.index = index;
 			this.label = label;
+			this.data = data;
 			
 			OvalShape ovalShape = new OvalShape();
 			ovalShape.resize(radius, radius);
@@ -453,8 +462,8 @@ public class LineChart extends View implements OnTouchListener{
 		}
 		
 		public void expandOrDeflate(){
-			float to = expanded ? RADIUS : EXPAND;
-			float from = expanded ? EXPAND : RADIUS;
+			float to = expanded ? NORMAL_RADIUS : EXPAND_RADIUS;
+			float from = expanded ? EXPAND_RADIUS : NORMAL_RADIUS;
 			ObjectAnimator ex = ObjectAnimator.ofFloat(this, "radius", from, to);
 			ex.setDuration(ANIM_DURATION);
 			ex.start();
@@ -469,6 +478,10 @@ public class LineChart extends View implements OnTouchListener{
 			paintPoint = new Paint();
 			setPaintInner();
 			setPaintOutter();
+			
+			paintText = new Paint();
+			paintText.setColor(Color.BLACK);
+			paintText.setTextSize(TEXT_SIZE * 2);
 		}
 
 		private void setPaintOutter() {
@@ -492,9 +505,17 @@ public class LineChart extends View implements OnTouchListener{
 			setPaintOutter();
 			paintPoint.setAlpha(circleAlpha);
 			canvas.drawCircle(location.x, location.y, radius, paintPoint);
+
+			if(expanded){
+				drawText(canvas);
+			}
 		}
-		
-		
+
+		private void drawText(Canvas canvas) {
+			//set the alpha to the proportion that the expand animation is done- simulate fade in
+			paintText.setAlpha( (int) ((1 - (EXPAND_RADIUS - radius) / (EXPAND_RADIUS - NORMAL_RADIUS)) * 255));
+			canvas.drawText("" + (int)data, location.x + (int)(TEXT_X_DISTANCE * .75), location.y + NORMAL_RADIUS, paintText);
+		}
 		
 //Boilerplate
 		public void setY(float y){ 
