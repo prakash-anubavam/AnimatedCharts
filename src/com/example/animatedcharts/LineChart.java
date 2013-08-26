@@ -57,6 +57,11 @@ public class LineChart extends View implements OnTouchListener{
 	private int everythingButGridAlpha = 255;
 	private int gridAlpha = 255;
 	
+	/**The oval is used in the transition grid expansion animation*/
+	private int ovalAlpha = 0;
+	private int ovalWidth = (int) LinePoint.EXPAND_RADIUS;
+	private int ovalHeight = (int) LinePoint.EXPAND_RADIUS;
+	
 	final float STROKE_WIDTH = 6f;
 	
 	LineChartDataset dataset;
@@ -72,6 +77,7 @@ public class LineChart extends View implements OnTouchListener{
 	Paint paintAxes;
 	Paint paintGrid;
 	Paint paintFill;
+	Paint paintOval;
 	
 	final int TEXT_X_DISTANCE = 60;
 	final int TEXT_Y_DISTANCE = 50;
@@ -176,6 +182,11 @@ public class LineChart extends View implements OnTouchListener{
 		paintFill = new Paint();
 		paintFill.setColor(Color.GRAY);
 		paintFill.setStyle(Paint.Style.FILL);
+		
+		paintOval = new Paint();
+		paintOval.setColor(Color.BLACK);
+		paintOval.setStyle(Paint.Style.STROKE);
+		paintOval.setStrokeWidth(STROKE_WIDTH);
 	}
 
 	private void setPaintAlphas() {
@@ -183,6 +194,7 @@ public class LineChart extends View implements OnTouchListener{
 		paintFill.setAlpha(fillAlpha);
 		paintConnections.setAlpha(everythingButGridAlpha);
 		paintGrid.setAlpha(gridAlpha);
+		paintOval.setAlpha(ovalAlpha);
 	}
 
 	
@@ -194,6 +206,8 @@ public class LineChart extends View implements OnTouchListener{
 		invalidate();
 		setPaintAlphas();
 		setYTicks();
+		
+		drawOval(canvas);
 
 		int y_increment = currentHeight / y_ticks;
 		int x_increment = currentWidth / X_TICKS;
@@ -214,6 +228,10 @@ public class LineChart extends View implements OnTouchListener{
 		}
 	}
 
+	private void drawOval(Canvas canvas) {
+		RectF rect = new RectF(currentX - 20, currentY - 20, currentX + currentWidth + 20, currentY + currentHeight + 20);
+		canvas.drawOval(rect, paintOval);
+	}
 
 	/**Determine how many "ticks" will be on the y axis.
 	 * The algorithm essentially wants to make the numbers at the
@@ -342,6 +360,10 @@ public class LineChart extends View implements OnTouchListener{
 		canvas.drawPath(fillPath, paintFill);
 	}
 	
+	
+//////////////////////////////////////////////////////////////////////////
+//Getters and setters for animations
+//////////////////////////////////////////////////////////////////////////
 	public int getCurrentHeight(){ return currentHeight; }
 	public void setCurrentHeight(float newHeight){ currentHeight = (int) newHeight; }
 	public float getRealHeight(){ return realHeight; }
@@ -360,6 +382,14 @@ public class LineChart extends View implements OnTouchListener{
 	
 	public int gridAlpha(){ return gridAlpha; }
 	public void setGridAlpha(float val){ gridAlpha = (int)val; }
+	
+	public int getOvalAlpha(){ return ovalAlpha; }
+	public void setOvalAlpha(float val){ ovalAlpha = (int)val; }
+	
+	public int getOvalWidth(){ return ovalWidth; }
+	public void setOvalWidth(float val){ ovalWidth = (int)ovalWidth; }
+	public int getOvalHeight(){ return ovalHeight; }
+	public void setOvalHeight(float val){ ovalHeight = (int)ovalHeight; }
 	
 //////////////////////////////////////////////////////////////////////////
 //Animate
@@ -402,7 +432,14 @@ public class LineChart extends View implements OnTouchListener{
 		yAnim.setDuration(GRID_DURATION);
 		yAnim.setInterpolator(inter);
 		
-		gridAnims.playTogether(widthAnim, heightAnim, xAnim, yAnim);
+		ObjectAnimator gridAlphaAnim = ObjectAnimator.ofFloat(this, "gridAlpha", 0f, 255f);
+		gridAlphaAnim.setDuration(GRID_DURATION);
+		gridAlphaAnim.setInterpolator(new AccelerateInterpolator());
+		
+		ObjectAnimator ovalAlphaAnim = ObjectAnimator.ofFloat(this, "ovalAlpha", 255f, 0);
+		ovalAlphaAnim.setDuration(GRID_DURATION/2);
+		
+		gridAnims.playTogether(widthAnim, heightAnim, xAnim, yAnim, gridAlphaAnim, ovalAlphaAnim);
 		gridAnims.start();
 		
 		mHandler.postDelayed(new Runnable() {
@@ -552,9 +589,10 @@ public class LineChart extends View implements OnTouchListener{
 //////////////////////////////////////////////////////////////////////////
 	private class LinePoint extends ShapeDrawable{
 		private static final long ANIM_DURATION = 200;
-		public final float NORMAL_RADIUS = 10;
-		public final float EXPAND_RADIUS = 20;
-		final int APPROX_CHAR_WIDTH = 20;
+		public final static float NORMAL_RADIUS = 10;
+		public final static float EXPAND_RADIUS = 20;
+		final static int APPROX_CHAR_WIDTH = 20;
+		final static float CIRCLE_STROKE_WIDTH = 4f;
 		
 		private int index;
 		private String label;
@@ -629,7 +667,7 @@ public class LineChart extends View implements OnTouchListener{
 		private void setPaintOutter() {
 			paintPoint.setColor(Color.BLACK);
 			paintPoint.setStyle(Paint.Style.STROKE);
-			paintPoint.setStrokeWidth(4f);
+			paintPoint.setStrokeWidth(CIRCLE_STROKE_WIDTH);
 		}
 
 		private void setPaintInner() {
