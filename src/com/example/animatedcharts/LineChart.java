@@ -43,6 +43,8 @@ public class LineChart extends View implements OnTouchListener{
 	private double maxValue = 0;
 	
 	private boolean gridAnimating = false;
+	private boolean animateGridNextTime = false; 
+	private Point pointToExpandFrom;
 	
 	private LineChartParent parent;
 	Handler mHandler;
@@ -88,7 +90,7 @@ public class LineChart extends View implements OnTouchListener{
 	final int CURVE_TENSION = 5;
 	
 	private String[] titles = {"Monthly", "Weekly", "Daily", "Hourly"};
-	private int titleIndex = 0;
+	private static int titleIndex = 0;
 	
 	public LineChart(LineChartParent parent, int x, int y, int width, int height, LineChartDataset dataset) {
 		super(parent.getContext());
@@ -163,7 +165,7 @@ public class LineChart extends View implements OnTouchListener{
 		}
 		
 		for(LinePoint point : points){
-			point.setY(origin.y);
+			//point.setY(origin.y);
 		}
 	}
 	
@@ -341,8 +343,8 @@ public class LineChart extends View implements OnTouchListener{
 		
 		//set middle points' control points
 		for(int i = 1; i < size - 1; i++){
-			Point before = points.get(i -1).getPoint();
-			Point after = points.get(i + 1).getPoint();
+			Point before = points.get(i -1).getLocation();
+			Point after = points.get(i + 1).getLocation();
 			Point control = new Point();
 			
 			control.x = (after.x - before.x)/CURVE_TENSION;
@@ -416,17 +418,28 @@ public class LineChart extends View implements OnTouchListener{
 	public void replayAnimation(){
 		Log.d("replay", "replay linechart");
 		this.fillAlpha = 0;
-		for(LinePoint point : points){
-			point.setCircleAlpha(0);
-			point.setY(origin.y);
-			if(point.isExpanded())point.expandOrDeflate();
-		}
 		
-		animatePoints();
+		if(animateGridNextTime){
+			animateGrid(pointToExpandFrom);
+		}
+		else{
+			for(LinePoint point : points){
+				point.setCircleAlpha(0);
+				point.setY(origin.y);
+				if(point.isExpanded())point.expandOrDeflate();
+			}
+			
+			animatePoints();
+		}
 	}
 	
-	public void animateGrid(LinePoint pointToExpandFrom){
-		final long GRID_DURATION = 1000;
+	public void setPointToExpandFrom(Point where){
+		this.pointToExpandFrom = where;
+		animateGridNextTime = true;
+	}
+	
+	public void animateGrid(Point pointToExpandFrom){
+		final long GRID_DURATION = 600;
 		final long OVAL_DURATION = GRID_DURATION/3;
 		
 		inflatePoint(-1);
@@ -446,11 +459,11 @@ public class LineChart extends View implements OnTouchListener{
 		heightAnim.setDuration(GRID_DURATION);
 		heightAnim.setInterpolator(inter);
 		
-		ObjectAnimator xAnim = ObjectAnimator.ofFloat(this, "currentX", (float)pointToExpandFrom.getX(), realX);
+		ObjectAnimator xAnim = ObjectAnimator.ofFloat(this, "currentX", (float)pointToExpandFrom.x, realX);
 		xAnim.setDuration(GRID_DURATION);
 		xAnim.setInterpolator(inter);
 		
-		ObjectAnimator yAnim = ObjectAnimator.ofFloat(this, "currentY", (float)pointToExpandFrom.getY(), realY);
+		ObjectAnimator yAnim = ObjectAnimator.ofFloat(this, "currentY", (float)pointToExpandFrom.y, realY);
 		yAnim.setDuration(GRID_DURATION);
 		yAnim.setInterpolator(inter);
 		
@@ -490,9 +503,10 @@ public class LineChart extends View implements OnTouchListener{
 				animateFadeIn(); 
 				gridAnimating = false;
 			}
-		}, (long) (GRID_DURATION * 1.2));
+		}, (long) (GRID_DURATION * 1.1));
 		
 		titleIndex = (titleIndex + 1) % titles.length;
+		animateGridNextTime = false;
 	}
 	
 	public void animateFadeIn(){
@@ -601,7 +615,9 @@ public class LineChart extends View implements OnTouchListener{
 			//expand the grid out from the touched point
 			else if(inside && expanded){
 				point.expandOrDeflate();
-				animateGrid(point);
+				animateGridNextTime = true;
+				
+				parent.LineChartItemDoubleClicked(point);
 			}
 			
 			else if(expanded){
@@ -631,7 +647,7 @@ public class LineChart extends View implements OnTouchListener{
 //////////////////////////////////////////////////////////////////////////
 //DataPoint
 //////////////////////////////////////////////////////////////////////////
-	private class LinePoint extends ShapeDrawable{
+	public class LinePoint extends ShapeDrawable{
 		private static final long ANIM_DURATION = 200;
 		public final static float NORMAL_RADIUS = 10;
 		public final static float EXPAND_RADIUS = 20;
@@ -794,7 +810,7 @@ public class LineChart extends View implements OnTouchListener{
 		}
 		public int getAlpha(){ return circleAlpha; }
 		
-		public Point getPoint(){ return location; }
+		public Point getLocation(){ return location; }
 		public int getY(){ return location.y; }
 		public int getX(){ return location.x; }
 		public float getRadius(){ return radius; }
@@ -814,7 +830,7 @@ public class LineChart extends View implements OnTouchListener{
 	/**Any container using a LineChart must implement this interface*/
 	public interface LineChartParent{
 		public void LineChartItemClicked(int which);
-		
+		public void LineChartItemDoubleClicked(LinePoint where);
 		public Context getContext();
 	}
 

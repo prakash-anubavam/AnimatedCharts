@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+import com.example.animatedcharts.LineChart.LinePoint;
 import com.example.piechart.R;
 
 public class ChartFragment extends android.support.v4.app.Fragment implements LineChart.LineChartParent{
@@ -50,10 +51,10 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	public void init(){
 		container = (RelativeLayout)getView().findViewById(R.id.container);
 		container.setBackgroundColor(Color.WHITE);
-		initCharts();
+		initCharts(null);
 	}
 	
-	public void initCharts() {
+	public void initCharts(Point p) {
 		
 		myMap = generateData();
 		
@@ -63,6 +64,7 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 		//context, x, y, width, height,  dataset
 		pc = new PieChart(this, 270, 100, 400, 400,  dataset);
 		lc = new LineChart(this, 100, 100, 800, 400,  lineData);
+		if(p != null) lc.setPointToExpandFrom(p);
 		showChart();
 		 
 		((MainActivity)getActivity()).setData(myMap);
@@ -113,7 +115,7 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	}
 	
 	public void newData(){
-		initCharts();
+		initCharts(null);
 	}
 	
 	@Override
@@ -129,5 +131,11 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	public void changeChart() {
 		pieChartShowing = !pieChartShowing;
 		showChart();
+	}
+
+
+	@Override
+	public void LineChartItemDoubleClicked(LinePoint where) {
+		initCharts(where.getLocation());
 	}
 }
