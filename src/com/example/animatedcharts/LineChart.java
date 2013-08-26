@@ -61,6 +61,8 @@ public class LineChart extends View implements OnTouchListener{
 	private int ovalAlpha = 0;
 	private int ovalWidth = (int) LinePoint.EXPAND_RADIUS;
 	private int ovalHeight = (int) LinePoint.EXPAND_RADIUS;
+	private float ovalStrokeWidth = LinePoint.CIRCLE_STROKE_WIDTH;
+	private float ovalRadiusFactor = 1;
 	
 	final float STROKE_WIDTH = 6f;
 	
@@ -189,12 +191,13 @@ public class LineChart extends View implements OnTouchListener{
 		paintOval.setStrokeWidth(STROKE_WIDTH);
 	}
 
-	private void setPaintAlphas() {
+	private void setPaintParams() {
 		paintText.setAlpha(everythingButGridAlpha);
 		paintFill.setAlpha(fillAlpha);
 		paintConnections.setAlpha(everythingButGridAlpha);
 		paintGrid.setAlpha(gridAlpha);
 		paintOval.setAlpha(ovalAlpha);
+		paintOval.setStrokeWidth(ovalStrokeWidth);
 	}
 
 	
@@ -204,7 +207,7 @@ public class LineChart extends View implements OnTouchListener{
 	@Override
 	public void draw(Canvas canvas){
 		invalidate();
-		setPaintAlphas();
+		setPaintParams();
 		setYTicks();
 		
 		drawOval(canvas);
@@ -229,8 +232,8 @@ public class LineChart extends View implements OnTouchListener{
 	}
 
 	private void drawOval(Canvas canvas) {
-		RectF rect = new RectF(currentX - 20, currentY - 20, currentX + currentWidth + 20, currentY + currentHeight + 20);
-		canvas.drawOval(rect, paintOval);
+		RectF rect = new RectF(currentX, currentY, currentX + currentWidth, currentY + currentHeight);
+		canvas.drawRoundRect(rect, currentWidth * ovalRadiusFactor, currentHeight * ovalRadiusFactor, paintOval);
 	}
 
 	/**Determine how many "ticks" will be on the y axis.
@@ -391,6 +394,12 @@ public class LineChart extends View implements OnTouchListener{
 	public int getOvalHeight(){ return ovalHeight; }
 	public void setOvalHeight(float val){ ovalHeight = (int)ovalHeight; }
 	
+	public float getOvalStrokeWidth(){ return ovalStrokeWidth; }
+	public void setOvalStrokeWidth(float val){ ovalStrokeWidth = val; }
+	
+	public float getOvalRadiusFactor(){ return ovalRadiusFactor; }
+	public void setOvalRadiusFactor(float val){ ovalRadiusFactor = val; }
+	
 //////////////////////////////////////////////////////////////////////////
 //Animate
 //////////////////////////////////////////////////////////////////////////	
@@ -405,13 +414,16 @@ public class LineChart extends View implements OnTouchListener{
 		
 		animatePoints();
 	}
-
 	
 	public void animateGrid(LinePoint pointToExpandFrom){
-		final long GRID_DURATION = 800;
+		final long GRID_DURATION = 1000;
+		final long OVAL_DURATION = GRID_DURATION/3;
 		
 		inflatePoint(-1);
 		gridAnimating = true;
+		gridAlpha = 0;
+		ovalAlpha = 255;
+		
 		
 		AnimatorSet gridAnims = new AnimatorSet();
 		TimeInterpolator inter = new AccelerateDecelerateInterpolator();
@@ -432,15 +444,35 @@ public class LineChart extends View implements OnTouchListener{
 		yAnim.setDuration(GRID_DURATION);
 		yAnim.setInterpolator(inter);
 		
-		ObjectAnimator gridAlphaAnim = ObjectAnimator.ofFloat(this, "gridAlpha", 0f, 255f);
-		gridAlphaAnim.setDuration(GRID_DURATION);
+		final ObjectAnimator gridAlphaAnim = ObjectAnimator.ofFloat(this, "gridAlpha", 0f, 255f);
+		gridAlphaAnim.setDuration(OVAL_DURATION/2);
 		gridAlphaAnim.setInterpolator(new AccelerateInterpolator());
 		
-		ObjectAnimator ovalAlphaAnim = ObjectAnimator.ofFloat(this, "ovalAlpha", 255f, 0);
-		ovalAlphaAnim.setDuration(GRID_DURATION/2);
+		ObjectAnimator ovalStrokeAnim = ObjectAnimator.ofFloat(this, "ovalStrokeWidth", LinePoint.CIRCLE_STROKE_WIDTH, 0);
+		ovalStrokeAnim.setDuration(OVAL_DURATION);
 		
-		gridAnims.playTogether(widthAnim, heightAnim, xAnim, yAnim, gridAlphaAnim, ovalAlphaAnim);
+		final ObjectAnimator ovalAlphaAnim = ObjectAnimator.ofFloat(this, "ovalAlpha", 255f, 0);
+		ovalAlphaAnim.setDuration(OVAL_DURATION/2);
+		
+		ObjectAnimator ovalRadiusAnim = ObjectAnimator.ofFloat(this, "ovalRadiusFactor", 1, 0);
+		ovalRadiusAnim.setDuration(OVAL_DURATION);
+		
+		gridAnims.playTogether(widthAnim, heightAnim, xAnim, yAnim, ovalStrokeAnim, ovalRadiusAnim);
 		gridAnims.start();
+		
+		mHandler.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				ovalAlphaAnim.start();
+			}
+		}, (long) (OVAL_DURATION * .65));
+		
+		mHandler.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				gridAlphaAnim.start();
+			}
+		}, (long) (OVAL_DURATION * .75));
 		
 		mHandler.postDelayed(new Runnable() {
 			@Override
