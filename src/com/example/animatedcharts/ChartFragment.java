@@ -1,9 +1,8 @@
 package com.example.animatedcharts;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
-
-import com.example.piechart.R;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -13,13 +12,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+import com.example.piechart.R;
+
 public class ChartFragment extends android.support.v4.app.Fragment implements LineChart.LineChartParent{
 	PieChart pc;
 	LineChart lc;
 	ViewGroup container;
 	Random rand;
 	PieChartDataset pieData;
-	HashMap<String, Double> map;
+	HashMap<String, Double> myMap;
+	boolean pieChartShowing = false;
 	
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
@@ -53,23 +55,35 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	
 	public void initCharts() {
 		
-		HashMap<String, Double> map = generateData();
+		myMap = generateData();
 		
-		PieChartDataset dataset = new PieChartDataset(map);
-		LineChartDataset lineData = new LineChartDataset(map);
+		PieChartDataset dataset = new PieChartDataset(myMap);
+		LineChartDataset lineData = new LineChartDataset(myMap);
 		
 		//context, x, y, width, height,  dataset
 		pc = new PieChart(this, 270, 100, 400, 400,  dataset);
 		lc = new LineChart(this, 100, 100, 800, 400,  lineData);
-		container.removeAllViews();
-		container.addView(lc);
-		//pc.replayAnimation();
+		showChart();
+		 
+		((MainActivity)getActivity()).setData(myMap);
+	}
+
+	private void showChart() {
+		if(pieChartShowing){
+			container.removeAllViews();
+			container.addView(pc);
+			pc.replayAnimation();
+		}
+		else{
+			container.removeAllViews();
+			container.addView(lc);
+			lc.replayAnimation();
+		}
 		
-		((MainActivity)getActivity()).setData(map);
 	}
 
 	private HashMap<String, Double> generateData() {
-		map =  new HashMap<String, Double>();
+		myMap =  new HashMap<String, Double>();
 		rand = new Random();
 		final int powerOf10 = rand.nextInt(4) + 1;
 		final int numItems = rand.nextInt(3) + 3;
@@ -77,14 +91,14 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 		for(int i = 0; i < numItems; i++){
 			Double d = ((double)rand.nextInt((int)Math.pow(10, powerOf10)));
 			String s = "Item " + (i +1) ;
-			map.put(s, d);
+			myMap.put(s, d);
 		}
 		
-		return map;
+		return myMap;
 	}
 	
 	public HashMap<String, Double> getData(){
-		return map;
+		return myMap;
 	}
 	
 	public void arcClicked(int arcIndex){
@@ -111,5 +125,10 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	@Override
 	public Context getContext() {
 		return getActivity();
+	}
+
+	public void changeChart() {
+		pieChartShowing = !pieChartShowing;
+		showChart();
 	}
 }

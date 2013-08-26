@@ -48,7 +48,7 @@ public class LineChart extends View implements OnTouchListener{
 	
 	LineChartDataset dataset;
 	
-	private List<LinePoint> points;
+	private ArrayList<LinePoint> points;
 	
 	private Point origin;
 	
@@ -84,8 +84,6 @@ public class LineChart extends View implements OnTouchListener{
 		initPaints();
 		
 		setPoints();
-		
-		animatePoints();
 	}
 	
 	private void getMax() {
@@ -336,6 +334,18 @@ public class LineChart extends View implements OnTouchListener{
 //////////////////////////////////////////////////////////////////////////
 //Animate
 //////////////////////////////////////////////////////////////////////////	
+	public void replayAnimation(){
+		Log.d("replay", "replay linechart");
+		this.fillAlpha = 0;
+		for(LinePoint point : points){
+			point.setCircleAlpha(0);
+			point.setY(origin.y);
+			if(point.isExpanded())point.expandOrDeflate();
+		}
+		
+		animatePoints();
+	}
+
 	public void animateGrid(){
 		final long GRID_DURATION = 800;
 		
@@ -465,7 +475,7 @@ public class LineChart extends View implements OnTouchListener{
 		private static final long ANIM_DURATION = 200;
 		public final float NORMAL_RADIUS = 10;
 		public final float EXPAND_RADIUS = 20;
-		final int APPROX_DIGIT_WIDTH = 20;
+		final int APPROX_CHAR_WIDTH = 20;
 		
 		private int index;
 		private String label;
@@ -569,37 +579,41 @@ public class LineChart extends View implements OnTouchListener{
 			paintText.setAlpha( (int) ((1 - (EXPAND_RADIUS - radius) / (EXPAND_RADIUS - NORMAL_RADIUS)) * 255));
 						
 			int xOffset = (int)(TEXT_X_DISTANCE * .75);
-			int numDigits = getDigits(data);
+			int numChars = label.length();
 
 			boolean closeToRightEdge = (origin.x + realWidth) - location.x < realWidth * .25;
 			
 
 			//Put text on the left side instead
 			if(closeToRightEdge){
-				xOffset = (int) (-xOffset - (APPROX_DIGIT_WIDTH *numDigits));
+				xOffset = (int) (-xOffset - (APPROX_CHAR_WIDTH *numChars));
 			}
 			
-			RectF rect = getRect(closeToRightEdge, numDigits);
+			RectF rect = getRect(closeToRightEdge, numChars);
 			
 			canvas.drawRoundRect(rect, radius, radius, paintBoxInside);
 			canvas.drawRoundRect(rect, radius, radius, paintBox);
 			
-			canvas.drawText("" + (int)data, location.x + xOffset, location.y + NORMAL_RADIUS, paintText);
+			float topRow = (float) (location.y - NORMAL_RADIUS * 3.5);			
+			float bottomRow = location.y + NORMAL_RADIUS;
+			
+			canvas.drawText("" + (int)data, location.x + xOffset, bottomRow, paintText);
+			canvas.drawText(label, location.x + xOffset, topRow, paintText);
 		}
 		
 		/**Get the rectangle that the text fits in*/
 		private RectF getRect(boolean close, int numDigits){
-			float top = (float) (location.y - radius * 1.5);
+			float top = (float) (location.y - radius * 4.3);
 			float bot = (float) (location.y + radius * 1.5);
 			float left = 0; float right = 0;
 			
 			if(close){
-				left = location.x - TEXT_X_DISTANCE - (numDigits + 1) * APPROX_DIGIT_WIDTH;
+				left = location.x - TEXT_X_DISTANCE - (numDigits + 1) * APPROX_CHAR_WIDTH;
 				right = (float) (location.x - TEXT_X_DISTANCE * .5);
 			}
 			else{
 				left = (float) (location.x + TEXT_X_DISTANCE * .5);
-				right = location.x + TEXT_X_DISTANCE + (numDigits + 1) * APPROX_DIGIT_WIDTH;
+				right = location.x + TEXT_X_DISTANCE + (numDigits + 1) * APPROX_CHAR_WIDTH;
 			}
 			
 			return new RectF(left, top, right, bot);

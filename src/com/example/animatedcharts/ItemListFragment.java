@@ -42,6 +42,7 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 
 	private void setViews() {
 		((Button)getView().findViewById(R.id.new_data_button)).setOnClickListener(this);
+		((Button)getView().findViewById(R.id.change_chart_button)).setOnClickListener(this);
 		
 		dataViews.add((TextView)getView().findViewById(R.id.item1));
 		dataViews.add((TextView)getView().findViewById(R.id.item2));
@@ -57,6 +58,7 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 
 	//TODO turn this into listview manipulations
 	public void setData(Map<String, Double> data) {
+		Log.d("setData", "setting data, size " + data.size());
 		setViews();
 		
 		Iterator<String> it = data.keySet().iterator();
@@ -65,6 +67,7 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 			TextView view = dataViews.get(i);
 			String label = it.next();
 			
+			Log.d("views", "setting view " + view.getId() + " label " + label);
 			String str = String.format("%s: %s", 
 					label, data.get(label));
 			view.setText(str);
@@ -74,11 +77,19 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 
 	@Override
 	public void onClick(View view) {
-		
+		Log.d("button", "click");
 		if(view.getId() == R.id.new_data_button){
 			((MainActivity)getActivity()).newDataButtonClicked();
+			Log.d("button", "new data");
 			return;
 		}
+		if(view.getId() == R.id.change_chart_button){
+			Log.d("button", "change chart");
+			((MainActivity)getActivity()).changeChart();
+			return;
+		}
+		
+		//if list item clicked
 		int item = Integer.parseInt(((TextView)view).getText().toString().substring(5, 6));
 		item--;
 		((MainActivity)getActivity()).listItemClicked(item);

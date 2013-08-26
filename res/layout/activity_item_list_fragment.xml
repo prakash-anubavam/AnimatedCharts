@@ -8,80 +8,101 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".ItemListFragment" >
 
-    <ScrollView 
-        android:id="@+id/scroll"
-        android:layout_width = "fill_parent"
-        android:layout_height = "wrap_content"
-        android:layout_above = "@+id/new_data_button">
-    
+
     <RelativeLayout
-        android:id="@+id/items"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-       															 
-    <TextView
-        android:id="@+id/item1"
+        android:id="@+id/buttons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:textSize="20sp"
-        android:gravity="left"
-        android:text="Item 1:" />
+        android:layout_alignParentTop="true" 
+        android:layout_alignParentLeft="true">
     
-    <TextView
-        android:id="@+id/item2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:paddingTop="15dp"
-        android:textSize="20sp"
-        android:layout_below="@+id/item1"
-        android:gravity="left"
-        android:text="Item 2:" />
-    
-    <TextView
-        android:id="@+id/item3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:paddingTop="15dp"
-        android:textSize="20sp"
-        android:layout_below="@+id/item2"
-        android:gravity="left"
-        android:text="Item 3:" />
-    
-    <TextView
-        android:id="@+id/item4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:paddingTop="15dp"
-        android:textSize="20sp"
-        android:layout_below="@+id/item3"
-      	android:gravity="left"
-        android:text="Item 4:" />
-    
-    <TextView
-        android:id="@+id/item5"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:paddingTop="15dp"
-        android:textSize="20sp"
-        android:layout_below="@+id/item4"
-        android:gravity="left"
-        android:text="Item 5:" />
-    </RelativeLayout>
-    
-        
-    </ScrollView>
 
     <Button
         android:id="@+id/new_data_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
         android:text="New Data" />
 
+    <Button
+        android:id="@+id/change_chart_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_below="@+id/new_data_button"
+        android:text="Change Chart" />
+</RelativeLayout>
+
+    <ScrollView
+        android:id="@+id/scroll"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true" 
+		android:layout_alignParentRight="true"
+		android:layout_toRightOf="@+id/buttons">
+   
+    <RelativeLayout
+        android:id="@+id/items"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true" >
+
+        <TextView
+            android:id="@+id/item1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:gravity="left"
+            android:text="Item 1:"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/item2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/item1"
+            android:layout_alignParentRight="true"
+            android:gravity="left"
+            android:paddingTop="15dp"
+            android:text="Item 2:"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/item3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/item2"
+            android:layout_alignParentRight="true"
+            android:gravity="left"
+            android:paddingTop="15dp"
+            android:text="Item 3:"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/item4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/item3"
+            android:layout_alignParentRight="true"
+            android:gravity="left"
+            android:paddingTop="15dp"
+            android:text="Item 4:"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/item5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/item4"
+            android:layout_alignParentRight="true"
+            android:gravity="left"
+            android:paddingTop="15dp"
+            android:text="Item 5:"
+            android:textSize="20sp" />
+        </RelativeLayout>
+        
+        </ScrollView>
+    
 </RelativeLayout>

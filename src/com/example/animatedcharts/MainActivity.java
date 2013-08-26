@@ -33,7 +33,6 @@ public class MainActivity extends FragmentActivity {
 	
 	public void setData(Map<String, Double> data){
 		itemFrag.setData(data);
-		
 	}
 	
 	public void chartItemClicked(int arcIndex){
@@ -48,6 +47,10 @@ public class MainActivity extends FragmentActivity {
 	
 	public void newDataButtonClicked(){
 		chartFrag.newData();
+	}
+
+	public void changeChart() {
+		chartFrag.changeChart();
 	}
 
 }
