@@ -86,6 +86,7 @@ public class LineChart extends View implements OnTouchListener{
 		setPoints();
 	}
 	
+	/**Find the maximum value to use on the y axis */
 	private void getMax() {
 		for(int i = 0; i < dataset.size(); i++){
 			maxValue = Math.max(maxValue, dataset.getItem(i).getData());
@@ -204,12 +205,7 @@ public class LineChart extends View implements OnTouchListener{
 		}
 		
 		if(divisor >= 9){
-			double add = Math.pow(10,  Math.max((digits -1),1));
-			
-			maxValue += add;
-			setYTicks();
-			
-			return;
+			divisor = 5;
 		}
 		
 		y_ticks = (int)divisor;
