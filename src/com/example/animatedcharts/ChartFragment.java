@@ -107,18 +107,11 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	
 	public void inflateItem(int item){
 		if(pieChartShowing){
-			inflateArc(item);
+			pc.inflateItem(item);
 		}
-		else inflatePoint(item);
+		else lc.inflatePoint(item);
 	}
 	
-	public void inflateArc(int item){
-		pc.inflateArcIndex(item);
-	}
-	
-	public void inflatePoint(int item){
-		lc.inflatePoint(item);
-	}
 	
 	public void newData(){
 		initCharts();

@@ -27,24 +27,33 @@ public class PieChartDataset {
 			sum+= entry.getValue();
 		}
 		
+		int index = 0;
 		for(Entry<String, Double> entry : data.entrySet()){
 			
 			//adds percentages to items
-			PieChartDataItem item = new PieChartDataItem(entry.getKey(), entry.getValue(), sum);
+			PieChartDataItem item = new PieChartDataItem(entry.getKey(), entry.getValue(), sum, index);
 			items.add(item);
+			index++;
 		}
 		sortData();
 	}
 
 	@SuppressWarnings("unchecked")
 	private void sortData() {
-		Log.d("sort", items.toString());
 		Collections.sort(items);
-		Log.d("sort", items.toString());
 	}
 	
 	public List<PieChartDataItem> getData(){
 		return items;
+	}
+	
+	public int getIndexForItem(int item){
+		for(int i = 0; i < items.size(); i++){
+			if(items.get(i).getIndex() == item){
+				return i;
+			}
+		}
+		return -1;
 	}
 	
 	public class PieChartDataItem implements Comparable<PieChartDataItem>{
@@ -52,11 +61,13 @@ public class PieChartDataset {
 		private String itemLabel;
 		/**Kept as a decimal, not an actual percentage*/
 		private double itemPercentage;
+		private int index;
 		
-		public PieChartDataItem(String label, double data, double total){
+		public PieChartDataItem(String label, double data, double total, int index){
 			this.itemData = data; 
 			this.itemLabel = label;
 			this.itemPercentage = data/total;			
+			this.index = index;
 		}
 
 		@Override
@@ -83,6 +94,10 @@ public class PieChartDataset {
 		
 		public String getLabel(){
 			return itemLabel;
+		}
+		
+		public int getIndex(){
+			return index;
 		}
 		
 	}

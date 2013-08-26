@@ -135,7 +135,7 @@ public class PieChart extends View implements OnTouchListener{
 		int eventX = (int)e.getX();
 		
 		int arcIndex = whichArcIsThePointIn(new Point(eventY, eventX));
-		parent.arcClicked(arcIndex);
+		parent.arcClicked(mData.getData().get(arcIndex).getIndex());
 		
 		return inflateArcIndex(arcIndex);
 	}
@@ -152,6 +152,10 @@ public class PieChart extends View implements OnTouchListener{
 			}
 		}
 		return false;
+	}
+	
+	public void inflateItem(int item){
+		inflateArcIndex(mData.getIndexForItem(item));
 	}
 	
 	private int whichArcIsThePointIn(Point loc) {
