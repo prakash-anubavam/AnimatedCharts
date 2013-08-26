@@ -416,7 +416,25 @@ public class LineChart extends View implements OnTouchListener{
 	
 	public void animateFadeIn(){
 		final long FADE_DURATION = 500;
+		List<Animator> allAnims = new ArrayList<Animator>(); 
 		
+		ObjectAnimator fill = ObjectAnimator.ofFloat(this, "fillAlpha", 0f, FULL_FILL_ALPHA);
+		fill.setDuration(FADE_DURATION);
+		allAnims.add(fill);
+		
+		ObjectAnimator everythingElse = ObjectAnimator.ofFloat(this, "everythingButGridAlpha", 0f, 255f);
+		everythingElse.setDuration(FADE_DURATION);
+		allAnims.add(everythingElse);
+		
+		for(LinePoint point : points){
+			ObjectAnimator pointAnim = ObjectAnimator.ofFloat(point, "circleAlpha", 0f, 255f);
+			pointAnim.setDuration(FADE_DURATION);
+			allAnims.add(pointAnim); 
+		}
+		
+		AnimatorSet fadeAnims = new AnimatorSet();
+		fadeAnims.playTogether(allAnims);
+		fadeAnims.start();
 	}
 	
 	
