@@ -87,6 +87,9 @@ public class LineChart extends View implements OnTouchListener{
 	
 	final int CURVE_TENSION = 5;
 	
+	private String[] titles = {"Monthly", "Weekly", "Daily", "Hourly"};
+	private int titleIndex = 0;
+	
 	public LineChart(LineChartParent parent, int x, int y, int width, int height, LineChartDataset dataset) {
 		super(parent.getContext());
 		this.setOnTouchListener(this);
@@ -211,12 +214,15 @@ public class LineChart extends View implements OnTouchListener{
 		setYTicks();
 		
 		drawOval(canvas);
+		
 
 		int y_increment = currentHeight / y_ticks;
 		int x_increment = currentWidth / X_TICKS;
 		drawGrid(canvas, y_increment, x_increment);
 		
 		if(!gridAnimating){
+			drawTitle(canvas);
+			
 			x_increment = currentWidth / points.size();
 			drawYLabels(canvas, y_increment);
 			drawXLabels(canvas, x_increment);
@@ -229,6 +235,10 @@ public class LineChart extends View implements OnTouchListener{
 				point.draw(canvas);
 			}
 		}
+	}
+
+	private void drawTitle(Canvas canvas) {
+		canvas.drawText(titles[titleIndex], realX + realWidth/2 -25, realY - 30, paintText);
 	}
 
 	private void drawOval(Canvas canvas) {
@@ -481,6 +491,8 @@ public class LineChart extends View implements OnTouchListener{
 				gridAnimating = false;
 			}
 		}, (long) (GRID_DURATION * 1.2));
+		
+		titleIndex = (titleIndex + 1) % titles.length;
 	}
 	
 	public void animateFadeIn(){
