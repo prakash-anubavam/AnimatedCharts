@@ -608,7 +608,7 @@ public class LineChart extends View implements OnTouchListener{
 			float left = 0; float right = 0;
 			
 			if(close){
-				left = location.x - TEXT_X_DISTANCE - (numDigits + 1) * APPROX_CHAR_WIDTH;
+				left = (float) (location.x - (TEXT_X_DISTANCE * .75) - (numDigits + 1) * APPROX_CHAR_WIDTH);
 				right = (float) (location.x - TEXT_X_DISTANCE * .5);
 			}
 			else{
