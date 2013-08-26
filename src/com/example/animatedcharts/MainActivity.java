@@ -41,8 +41,7 @@ public class MainActivity extends FragmentActivity {
 
 	public void listItemClicked(int itemIndex) {
 		Log.d("item click", "" + itemIndex);
-		chartFrag.inflateArc(itemIndex);
-		chartFrag.inflatePoint(itemIndex);
+		chartFrag.inflateItem(itemIndex);
 	}
 	
 	public void newDataButtonClicked(){

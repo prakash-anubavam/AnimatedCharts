@@ -44,6 +44,8 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 		((Button)getView().findViewById(R.id.new_data_button)).setOnClickListener(this);
 		((Button)getView().findViewById(R.id.change_chart_button)).setOnClickListener(this);
 		
+		dataViews.removeAll(dataViews);
+		
 		dataViews.add((TextView)getView().findViewById(R.id.item1));
 		dataViews.add((TextView)getView().findViewById(R.id.item2));
 		dataViews.add((TextView)getView().findViewById(R.id.item3));
@@ -77,18 +79,18 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 
 	@Override
 	public void onClick(View view) {
-		Log.d("button", "click");
 		if(view.getId() == R.id.new_data_button){
+			boldItem(-1);
 			((MainActivity)getActivity()).newDataButtonClicked();
-			Log.d("button", "new data");
 			return;
 		}
 		if(view.getId() == R.id.change_chart_button){
-			Log.d("button", "change chart");
+			boldItem(-1);
 			((MainActivity)getActivity()).changeChart();
 			return;
 		}
 		
+		Log.d("button", "list item clicked");
 		//if list item clicked
 		int item = Integer.parseInt(((TextView)view).getText().toString().substring(5, 6));
 		item--;
@@ -97,22 +99,25 @@ public class ItemListFragment extends android.support.v4.app.Fragment implements
 		boldItem(item);
 	}
 
+	int currentSelected = -1;
+	
 	public void boldItem(int item) {
-		Log.d("inflate", "inflating " + item);
+		Log.d("bold", "touched " + item);
 		int size = dataViews.size();
+		
+		//if already selected, unselect everything
+		if(currentSelected == item){ currentSelected = -1; }
+		else{ currentSelected = item; }
+		
+		//Log.d("bold", "item " + item + ", current " + currentSelected);
 		for(int i = 0; i < size; i ++){
 			TextView view = dataViews.get(i);
-			Typeface style = view.getTypeface();
-			if(style != null && style.getStyle() == Typeface.BOLD){
-				view.setTypeface(null, Typeface.NORMAL);
+			Log.d("bold", "i " + i + ", current " + currentSelected);
+			if(i == currentSelected){
+				view.setTypeface(null, Typeface.BOLD);
 			}
 			else{
-				if(i == item){
-					view.setTypeface(null, Typeface.BOLD);
-				}
-				else{
-					view.setTypeface(null, Typeface.NORMAL);
-				}
+				view.setTypeface(null, Typeface.NORMAL);
 			}
 		}
 	

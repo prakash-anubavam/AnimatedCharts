@@ -85,7 +85,7 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	private HashMap<String, Double> generateData() {
 		myMap =  new HashMap<String, Double>();
 		rand = new Random();
-		final int powerOf10 = rand.nextInt(4) + 2;
+		final int powerOf10 = rand.nextInt(4) + 1;
 		final int numItems = rand.nextInt(3) + 3;
 		
 		for(int i = 0; i < numItems; i++){
@@ -103,6 +103,13 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	
 	public void arcClicked(int arcIndex){
 		((MainActivity)getActivity()).chartItemClicked(arcIndex);
+	}
+	
+	public void inflateItem(int item){
+		if(pieChartShowing){
+			inflateArc(item);
+		}
+		else inflatePoint(item);
 	}
 	
 	public void inflateArc(int item){

@@ -422,11 +422,12 @@ public class LineChart extends View implements OnTouchListener{
 		if(event.getAction() != MotionEvent.ACTION_DOWN) return false;
 
 		Point touchPoint = new Point((int)event.getX(), (int)event.getY()); 		
-		Log.d("touch", "touched at " + touchPoint);
+		Log.d("touch", "touched at " + touchPoint + ", action " + event.getAction());
+		
+		int index = -1;
 		
 		for(int i = 0; i < points.size(); i++){
 			LinePoint point = points.get(i);
-			int index = -1;
 			
 			//describe a bounding rectangle for simplicity
 			final double BUFFER = 5;
@@ -449,8 +450,9 @@ public class LineChart extends View implements OnTouchListener{
 				point.expandOrDeflate();
 			}
 			
-			parent.LineChartItemClicked(index);
 		}
+		
+		parent.LineChartItemClicked(index);
 		
 		return true;
 	}
