@@ -1,11 +1,11 @@
 package com.example.animatedcharts;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -111,7 +111,6 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 		}
 		else lc.inflatePoint(item);
 	}
-	
 	
 	public void newData(){
 		initCharts();

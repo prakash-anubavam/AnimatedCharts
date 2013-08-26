@@ -6,9 +6,11 @@ import java.util.List;
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.TimeInterpolator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Interpolator;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
@@ -20,6 +22,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 
@@ -28,21 +32,30 @@ import com.example.animatedcharts.LineChartDataset.LineChartDataItem;
 public class LineChart extends View implements OnTouchListener{
 
 	/**xy = top left corner coordinates*/
-	private int x; private int y;
-	private int currentWidth; private int currentHeight;
-	/**Real values are set at construction, independent of animation*/
-	private int realWidth; private int realHeight;
+	private int currentX; private int currentY;
+	private float realX; private float realY;
 	
+	/**Real values are set at construction, independent of animation*/
+	private int currentWidth; private int currentHeight;
+	private float realWidth; private float realHeight;
+	
+	/**the maximum number that will show on the y axis*/
 	private double maxValue = 0;
+	
+	private boolean gridAnimating = false;
 	
 	private LineChartParent parent;
 	Handler mHandler;
 	
 	int y_ticks = 5;
 	final int X_TICKS = 10;
+	private int numPoints;
+	
+	
 	private int fillAlpha = 0;
 	private final float FULL_FILL_ALPHA = 100; 
-	private int numPoints;
+	private int everythingButGridAlpha = 255;
+	private int gridAlpha = 255;
 	
 	final float STROKE_WIDTH = 6f;
 	
@@ -51,9 +64,10 @@ public class LineChart extends View implements OnTouchListener{
 	private ArrayList<LinePoint> points;
 	
 	private Point origin;
+	private Point center;
 	
 	Paint paintText;
-	Paint paintLines;
+	Paint paintConnections;
 	Paint paintTicks;
 	Paint paintAxes;
 	Paint paintGrid;
@@ -70,11 +84,14 @@ public class LineChart extends View implements OnTouchListener{
 		this.setOnTouchListener(this);
 		this.parent = parent;
 		
-		this.x = x; this.y = y; 
+		this.currentX = x; this.currentY = y; 
+		this.realX = x; this.realY = y;
 		this.currentWidth = width; this.currentHeight = height;
 		this.realWidth = width; this.realHeight = height;
 		
 		origin = new Point(x, y + height);
+		center = new Point(x + width/2, y + height/2);
+		
 		
 		this.dataset = dataset;
 		numPoints = dataset.size();
@@ -127,7 +144,7 @@ public class LineChart extends View implements OnTouchListener{
 		
 		for(int i = 0; i < size; i++){
 			LineChartDataItem item = dataset.getItem(i);
-			pointX = x + (i * x_offset); 
+			pointX = currentX + (i * x_offset); 
 			double data = item.getData();
 			pointY = (int)Math.round((origin.y) - (data / maxValue) * currentHeight);
 			
@@ -140,19 +157,16 @@ public class LineChart extends View implements OnTouchListener{
 	}
 	
 	public void initPaints(){
-		paintAxes = new Paint();
-		paintAxes.setColor(Color.BLACK);
-		paintAxes.setStrokeWidth(STROKE_WIDTH);
 
 		paintText = new Paint();
 		paintText.setColor(Color.GRAY);
 		paintText.setStrokeWidth(STROKE_WIDTH);
 		paintText.setTextSize(TEXT_SIZE);
 		
-		paintLines = new Paint();
-		paintLines.setColor(Color.BLACK);
-		paintLines.setStyle(Paint.Style.STROKE);
-		paintLines.setStrokeWidth(STROKE_WIDTH);
+		paintConnections = new Paint();
+		paintConnections.setColor(Color.BLACK);
+		paintConnections.setStyle(Paint.Style.STROKE);
+		paintConnections.setStrokeWidth(STROKE_WIDTH);
 		
 		paintGrid = new Paint();
 		paintGrid.setColor(Color.GRAY);
@@ -164,6 +178,13 @@ public class LineChart extends View implements OnTouchListener{
 		paintFill.setStyle(Paint.Style.FILL);
 	}
 
+	private void setPaintAlphas() {
+		paintText.setAlpha(everythingButGridAlpha);
+		paintFill.setAlpha(fillAlpha);
+		paintConnections.setAlpha(everythingButGridAlpha);
+		paintGrid.setAlpha(gridAlpha);
+	}
+
 	
 //////////////////////////////////////////////////////////////////////////
 //Draw
@@ -171,24 +192,28 @@ public class LineChart extends View implements OnTouchListener{
 	@Override
 	public void draw(Canvas canvas){
 		invalidate();
+		setPaintAlphas();
 		setYTicks();
 
 		int y_increment = currentHeight / y_ticks;
 		int x_increment = currentWidth / X_TICKS;
 		drawGrid(canvas, y_increment, x_increment);
 		
-		x_increment = currentWidth / points.size();
-		drawYLabels(canvas, y_increment);
-		drawXLabels(canvas, x_increment);
-		
-		if(points.size() >= 2){  	//no lines to draw
-			drawConnections(canvas);
-		}
-		
-		for(LinePoint point : points){
-			point.draw(canvas);
+		if(!gridAnimating){
+			x_increment = currentWidth / points.size();
+			drawYLabels(canvas, y_increment);
+			drawXLabels(canvas, x_increment);
+			
+			if(points.size() >= 2){  	//no lines to draw
+				drawConnections(canvas);
+			}
+			
+			for(LinePoint point : points){
+				point.draw(canvas);
+			}
 		}
 	}
+
 
 	/**Determine how many "ticks" will be on the y axis.
 	 * The algorithm essentially wants to make the numbers at the
@@ -214,7 +239,7 @@ public class LineChart extends View implements OnTouchListener{
 	private void drawYLabels(Canvas canvas, int y_increment){
 		for(int i = 0; i < y_ticks + 1; i++){
 			String val = "" + (i * (int)maxValue/y_ticks);
-			canvas.drawText(val, x - TEXT_X_DISTANCE, origin.y - i * y_increment, paintText);
+			canvas.drawText(val, currentX - TEXT_X_DISTANCE, origin.y - i * y_increment, paintText);
 		}
 	}
 	
@@ -227,17 +252,18 @@ public class LineChart extends View implements OnTouchListener{
 	}
 	
 	private void drawGrid(Canvas canvas, int y_increment, int x_increment){
+		
 		//draw y ticks
 		for(int i = 0; i <= y_ticks; i++){
-			Point left = new Point(origin.x, origin.y- y_increment * i);
-			Point right = new Point(origin.x + currentWidth, origin.y - y_increment * i);
+			Point left = new Point(currentX, currentY + currentHeight- y_increment * i);
+			Point right = new Point(currentX + currentWidth, currentY + currentHeight - y_increment * i);
 			canvas.drawLine(left.x, left.y, right.x,  right.y, paintGrid);
 		}
 		
 		//draw x ticks
 		for(int j = 0; j <= X_TICKS; j++){
-			Point top = new Point(origin.x + x_increment * j, origin.y - currentHeight);
-			Point bot = new Point(origin.x + x_increment * j, origin.y);
+			Point top = new Point(currentX + x_increment * j, currentY);
+			Point bot = new Point(currentX + x_increment * j, currentY + currentHeight);
 			canvas.drawLine(top.x, top.y, bot.x, bot.y, paintGrid);
 		}
 	}
@@ -266,7 +292,7 @@ public class LineChart extends View implements OnTouchListener{
 		}
 		
 		drawFill(canvas, connectingPath, first);		
-		canvas.drawPath(connectingPath, paintLines);
+		canvas.drawPath(connectingPath, paintConnections);
 	}
 
 	/**We're going to use Bezier curves to path through the points smoothly. 
@@ -313,19 +339,27 @@ public class LineChart extends View implements OnTouchListener{
 		fillPath.lineTo(origin.x, origin.y);
 		fillPath.lineTo(first.getX(), first.getY());
 		
-		paintFill.setAlpha(fillAlpha);
-		
 		canvas.drawPath(fillPath, paintFill);
 	}
 	
 	public int getCurrentHeight(){ return currentHeight; }
-	public void setCurrentHeight(int newHeight){ currentHeight = newHeight; }
-	public int getRealHeight(){ return realHeight; }
+	public void setCurrentHeight(float newHeight){ currentHeight = (int) newHeight; }
+	public float getRealHeight(){ return realHeight; }
 	
 	public int getCurrentWidth(){ return currentWidth; }
-	public void setCurrentWidth(int newWidth){ currentWidth = newWidth; }
-	public int getRealWidth(){ return realWidth; }
+	public void setCurrentWidth(float newWidth){ currentWidth = (int) newWidth; }
+	public float getRealWidth(){ return realWidth; }
 	
+	public int getCurrentX(){ return currentX; }
+	public void setCurrentX(float val){ currentX = (int) val; }
+	public int getCurrentY(){ return currentY; }
+	public void setCurrentY(float val){ currentY = (int) val; }
+	
+	public int getEverthingButGridAlpha(){ return everythingButGridAlpha; }
+	public void setEverythingButGridAlpha(float val){ everythingButGridAlpha = (int) val; }
+	
+	public int gridAlpha(){ return gridAlpha; }
+	public void setGridAlpha(float val){ gridAlpha = (int)val; }
 	
 //////////////////////////////////////////////////////////////////////////
 //Animate
@@ -342,29 +376,49 @@ public class LineChart extends View implements OnTouchListener{
 		animatePoints();
 	}
 
-	public void animateGrid(){
+	
+	public void animateGrid(LinePoint pointToExpandFrom){
 		final long GRID_DURATION = 800;
 		
+		inflatePoint(-1);
+		gridAnimating = true;
+		
 		AnimatorSet gridAnims = new AnimatorSet();
+		TimeInterpolator inter = new AccelerateDecelerateInterpolator();
 		
-		ObjectAnimator widthAnim = ObjectAnimator.ofFloat(this, "currentWidth", 0, realWidth);
+		ObjectAnimator widthAnim = ObjectAnimator.ofFloat(this, "currentWidth", 0f, realWidth);
 		widthAnim.setDuration(GRID_DURATION);
-		widthAnim.setInterpolator(new DecelerateInterpolator());
-		widthAnim.start();
+		widthAnim.setInterpolator(inter);
 		
-		ObjectAnimator heightAnim = ObjectAnimator.ofFloat(this, "currentHeight", 0, realHeight);
+		ObjectAnimator heightAnim = ObjectAnimator.ofFloat(this, "currentHeight", 0f, realHeight);
 		heightAnim.setDuration(GRID_DURATION);
-		heightAnim.setInterpolator(new DecelerateInterpolator());
+		heightAnim.setInterpolator(inter);
 		
-		gridAnims.playTogether(widthAnim, heightAnim);
+		ObjectAnimator xAnim = ObjectAnimator.ofFloat(this, "currentX", (float)pointToExpandFrom.getX(), realX);
+		xAnim.setDuration(GRID_DURATION);
+		xAnim.setInterpolator(inter);
+		
+		ObjectAnimator yAnim = ObjectAnimator.ofFloat(this, "currentY", (float)pointToExpandFrom.getY(), realY);
+		yAnim.setDuration(GRID_DURATION);
+		yAnim.setInterpolator(inter);
+		
+		gridAnims.playTogether(widthAnim, heightAnim, xAnim, yAnim);
 		gridAnims.start();
 		
 		mHandler.postDelayed(new Runnable() {
 			@Override
-			public void run() { animatePoints(); }
-		}, GRID_DURATION);
+			public void run() {
+				animateFadeIn(); 
+				gridAnimating = false;
+			}
+		}, (long) (GRID_DURATION * 1.2));
+	}
+	
+	public void animateFadeIn(){
+		final long FADE_DURATION = 500;
 		
 	}
+	
 	
 	public void animatePoints(){
 		final long DURATION = 800;
@@ -392,20 +446,23 @@ public class LineChart extends View implements OnTouchListener{
 		upSet.playTogether(upAnimations);
 		fadeSet.playTogether(fadeAnimations);
 		
-		final ObjectAnimator fillFadeIn = ObjectAnimator.ofFloat(this, "fillAlpha", 0f, FULL_FILL_ALPHA);
-		fillFadeIn.setDuration(DURATION);
-		fillFadeIn.setInterpolator(new DecelerateInterpolator());
-		
 		upSet.start();
 		
 		mHandler.postDelayed(new Runnable() {
 			
 			@Override
 			public void run() {
-				fillFadeIn.start();
+				animateFill(DURATION);
 				fadeSet.start();
 			}
 		}, (long)(DURATION * .75));
+	}
+	
+	public void animateFill(long dur){
+		ObjectAnimator fillFadeIn = ObjectAnimator.ofFloat(this, "fillAlpha", 0f, FULL_FILL_ALPHA);
+		fillFadeIn.setDuration(dur);
+		fillFadeIn.setInterpolator(new DecelerateInterpolator());
+		fillFadeIn.start();
 	}
 	
 	public void setFillAlpha(float val){
@@ -440,6 +497,12 @@ public class LineChart extends View implements OnTouchListener{
 				index = point.getIndex();
 				Log.d("touch", "expanding " + index);
 				point.expandOrDeflate();
+			}
+			
+			//expand the grid out from the touched point
+			else if(inside && expanded){
+				point.expandOrDeflate();
+				animateGrid(point);
 			}
 			
 			else if(expanded){
