@@ -64,6 +64,7 @@ public class LineChart extends View implements OnTouchListener{
 	public final float NORMAL_RADIUS;
 	public final float EXPAND_RADIUS;
 	public final int APPROX_CHAR_WIDTH;
+	public final int POPUP_TEXT_SIZE;
 	
 	/**The oval is used in the transition grid expansion animation*/
 	private int ovalAlpha = 0;
@@ -89,8 +90,8 @@ public class LineChart extends View implements OnTouchListener{
 	Paint paintFill;
 	Paint paintOval;
 	
-	final int TEXT_X_DISTANCE = 60;
-	final int TEXT_Y_DISTANCE = 50;
+	final int TEXT_X_DISTANCE;
+	final int TEXT_Y_DISTANCE;
 	final int TEXT_SIZE;
 	
 	final int CURVE_TENSION = 5;
@@ -117,9 +118,16 @@ public class LineChart extends View implements OnTouchListener{
 		TEXT_SIZE = 20;
 		NORMAL_RADIUS = TEXT_SIZE/2;
 		EXPAND_RADIUS = 2 * NORMAL_RADIUS;
-		APPROX_CHAR_WIDTH = TEXT_SIZE;
+		
+		//1080 was the width of the screen that I optimized the layout for
+		APPROX_CHAR_WIDTH = 20 * width / 1080;
+		POPUP_TEXT_SIZE = 40 * width /1080;	
+		TEXT_X_DISTANCE = 60 * width / 1080;
+		TEXT_Y_DISTANCE = 50 * width /1080;
+		
 		ovalWidth = (int) EXPAND_RADIUS;
 		ovalHeight = (int) EXPAND_RADIUS;
+		
 		
 		mHandler = new Handler();
 		
@@ -452,7 +460,7 @@ public class LineChart extends View implements OnTouchListener{
 	}
 	
 	public void animateGrid(Point pointToExpandFrom){
-		final long GRID_DURATION = 600;
+		final long GRID_DURATION = 800;
 		final long OVAL_DURATION = GRID_DURATION/3;
 		
 		inflatePoint(-1);
@@ -682,7 +690,7 @@ public class LineChart extends View implements OnTouchListener{
 		
 		private float radius = NORMAL_RADIUS; 
 		Paint paintPoint;
-		Paint paintText;
+		Paint paintPopupText;
 		Paint paintBox;
 		Paint paintBoxInside;
 		
@@ -719,9 +727,9 @@ public class LineChart extends View implements OnTouchListener{
 			setPaintInner();
 			setPaintOutter();
 			
-			paintText = new Paint();
-			paintText.setColor(Color.BLACK);
-			paintText.setTextSize(TEXT_SIZE * 2);
+			paintPopupText = new Paint();
+			paintPopupText.setColor(Color.BLACK);
+			paintPopupText.setTextSize(POPUP_TEXT_SIZE);
 			
 			paintBox = new Paint();
 			paintBox.setColor(Color.BLACK);
@@ -763,7 +771,7 @@ public class LineChart extends View implements OnTouchListener{
 
 		private void drawText(Canvas canvas) {
 			//set the alpha to the proportion that the expand animation is done- simulate fade in
-			paintText.setAlpha( (int) ((1 - (EXPAND_RADIUS - radius) / (EXPAND_RADIUS - NORMAL_RADIUS)) * 255));
+			paintPopupText.setAlpha( (int) ((1 - (EXPAND_RADIUS - radius) / (EXPAND_RADIUS - NORMAL_RADIUS)) * 255));
 						
 			int xOffset = (int)(TEXT_X_DISTANCE * .75);
 			int numChars = label.length();
@@ -784,8 +792,8 @@ public class LineChart extends View implements OnTouchListener{
 			float topRow = (float) (location.y - NORMAL_RADIUS * 3.5);			
 			float bottomRow = location.y + NORMAL_RADIUS;
 			
-			canvas.drawText("" + (int)data, location.x + xOffset, bottomRow, paintText);
-			canvas.drawText(label, location.x + xOffset, topRow, paintText);
+			canvas.drawText("" + (int)data, location.x + xOffset, bottomRow, paintPopupText);
+			canvas.drawText(label, location.x + xOffset, topRow, paintPopupText);
 		}
 		
 		/**Get the rectangle that the text fits in*/
