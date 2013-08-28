@@ -18,13 +18,13 @@
         android:orientation="horizontal"
         >
         
-    <fragment android:name="com.example.animatedcharts.ChartFragment"
+    <fragment android:name="com.steveinflow.animatedcharts.sample.ChartFragment"
             android:id="@+id/chart_frag"
             android:layout_weight="1.2"
             android:layout_width="0dp"
             android:layout_height="match_parent" />
 
-    <fragment android:name="com.example.animatedcharts.ItemListFragment"
+    <fragment android:name="com.steveinflow.animatedcharts.sample.ItemListFragment"
             android:id="@+id/list_frag"
             android:layout_weight="1"
             android:layout_width="0dp"
