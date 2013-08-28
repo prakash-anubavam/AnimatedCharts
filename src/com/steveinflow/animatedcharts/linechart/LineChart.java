@@ -59,10 +59,16 @@ public class LineChart extends View implements OnTouchListener{
 	private int everythingButGridAlpha = 255;
 	private int gridAlpha = 255;
 	
+	//point values
+	private static final long CIRCLE_ANIM_DURATION = 200;
+	public final float NORMAL_RADIUS;
+	public final float EXPAND_RADIUS;
+	public final int APPROX_CHAR_WIDTH;
+	
 	/**The oval is used in the transition grid expansion animation*/
 	private int ovalAlpha = 0;
-	private int ovalWidth = (int) LinePoint.EXPAND_RADIUS;
-	private int ovalHeight = (int) LinePoint.EXPAND_RADIUS;
+	private int ovalWidth;
+	private int ovalHeight;
 	private float ovalStrokeWidth = LinePoint.CIRCLE_STROKE_WIDTH;
 	private float ovalRadiusFactor = 1;
 	
@@ -85,7 +91,7 @@ public class LineChart extends View implements OnTouchListener{
 	
 	final int TEXT_X_DISTANCE = 60;
 	final int TEXT_Y_DISTANCE = 50;
-	final int TEXT_SIZE = 20;
+	final int TEXT_SIZE;
 	
 	final int CURVE_TENSION = 5;
 	
@@ -96,6 +102,8 @@ public class LineChart extends View implements OnTouchListener{
 		super(parent.getContext());
 		this.setOnTouchListener(this);
 		this.parent = parent;
+		this.dataset = dataset;
+		numPoints = dataset.size();
 		
 		this.currentX = x; this.currentY = y; 
 		this.realX = x; this.realY = y;
@@ -105,9 +113,14 @@ public class LineChart extends View implements OnTouchListener{
 		origin = new Point(x, y + height);
 		center = new Point(x + width/2, y + height/2);
 		
+		//set size constants
+		TEXT_SIZE = 20;
+		NORMAL_RADIUS = TEXT_SIZE/2;
+		EXPAND_RADIUS = 2 * NORMAL_RADIUS;
+		APPROX_CHAR_WIDTH = TEXT_SIZE;
+		ovalWidth = (int) EXPAND_RADIUS;
+		ovalHeight = (int) EXPAND_RADIUS;
 		
-		this.dataset = dataset;
-		numPoints = dataset.size();
 		mHandler = new Handler();
 		
 		getMax();
@@ -648,10 +661,7 @@ public class LineChart extends View implements OnTouchListener{
 //DataPoint
 //////////////////////////////////////////////////////////////////////////
 	public class LinePoint extends ShapeDrawable{
-		private static final long ANIM_DURATION = 200;
-		public final static float NORMAL_RADIUS = 10;
-		public final static float EXPAND_RADIUS = 20;
-		final static int APPROX_CHAR_WIDTH = 20;
+		
 		final static float CIRCLE_STROKE_WIDTH = 4f;
 		
 		private int index;
@@ -695,7 +705,7 @@ public class LineChart extends View implements OnTouchListener{
 			float to = expanded ? NORMAL_RADIUS : EXPAND_RADIUS;
 			float from = expanded ? EXPAND_RADIUS : NORMAL_RADIUS;
 			ObjectAnimator ex = ObjectAnimator.ofFloat(this, "radius", from, to);
-			ex.setDuration(ANIM_DURATION);
+			ex.setDuration(CIRCLE_ANIM_DURATION);
 			ex.start();
 			expanded = !expanded;
 		}
