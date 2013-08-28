@@ -14,12 +14,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
-import com.example.piechart.R;
 import com.steveinflow.animatedcharts.linechart.LineChart;
 import com.steveinflow.animatedcharts.linechart.LineChart.LinePoint;
 import com.steveinflow.animatedcharts.linechart.LineChartDataset;
 import com.steveinflow.animatedcharts.piechart.PieChart;
 import com.steveinflow.animatedcharts.piechart.PieChartDataset;
+import com.steveinflow.animcharts.R;
 
 public class ChartFragment extends android.support.v4.app.Fragment implements LineChart.LineChartParent{
 	PieChart pc;

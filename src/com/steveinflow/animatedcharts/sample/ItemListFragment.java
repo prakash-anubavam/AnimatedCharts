@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.steveinflow.animcharts.R;
+
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -15,7 +17,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.example.piechart.R;
 
 public class ItemListFragment extends android.support.v4.app.Fragment implements OnClickListener {
 
