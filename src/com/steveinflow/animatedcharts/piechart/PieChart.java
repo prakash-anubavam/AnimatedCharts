@@ -3,6 +3,7 @@ package com.steveinflow.animatedcharts.piechart;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.steveinflow.animatedcharts.linechart.LineChart.LinePoint;
 import com.steveinflow.animatedcharts.piechart.PieChartDataset.PieChartDataItem;
 import com.steveinflow.animatedcharts.sample.ChartFragment;
 
@@ -281,7 +282,6 @@ public class PieChart extends View implements OnTouchListener{
 		private boolean expanded;
 		private static final float EXPAND_SCALE = 1.1f;
 		
-		
 		/**determines the size of the arc as a measure
 		 * of how far it extends from the center. 
 		 */
@@ -374,5 +374,10 @@ public class PieChart extends View implements OnTouchListener{
 		}
 	}
 
+	public interface PieChartParent{
+		public void LineChartItemClicked(int which);
+		public void LineChartItemDoubleClicked(LinePoint where);
+		public Context getContext();
+	}
 	
 }

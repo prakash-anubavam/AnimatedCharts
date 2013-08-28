@@ -7,6 +7,8 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,8 +16,8 @@ import android.widget.RelativeLayout;
 
 import com.example.piechart.R;
 import com.steveinflow.animatedcharts.linechart.LineChart;
-import com.steveinflow.animatedcharts.linechart.LineChartDataset;
 import com.steveinflow.animatedcharts.linechart.LineChart.LinePoint;
+import com.steveinflow.animatedcharts.linechart.LineChartDataset;
 import com.steveinflow.animatedcharts.piechart.PieChart;
 import com.steveinflow.animatedcharts.piechart.PieChartDataset;
 
@@ -61,16 +63,36 @@ public class ChartFragment extends android.support.v4.app.Fragment implements Li
 	public void initCharts(Point p) {
 		
 		myMap = generateData();
+		Display display = getActivity().getWindowManager().getDefaultDisplay();
+		Point size = new Point(); 
+		display.getSize(size);
 		
-		PieChartDataset dataset = new PieChartDataset(myMap);
+		int containerWidth = size.x;
+		int containerHeight = size.y;
+		int smaller = Math.min(containerWidth, containerHeight);
+		
+		
+		int pieX = smaller / 4;
+		int pieY = smaller * 100/1080;
+		int pieRadius = (int) (smaller * 400/1080);
+		
+		int lineX = smaller * 100/1080;
+		int lineY = lineX;
+		int lineWidth = (int) (smaller * 800/1080);
+		int lineHeight = lineWidth/2;
+		
+		PieChartDataset pieData = new PieChartDataset(myMap);
 		LineChartDataset lineData = new LineChartDataset(myMap);
 		
 		//context, x, y, width, height,  dataset
-		pc = new PieChart(this, 270, 100, 400, 400,  dataset);
-		lc = new LineChart(this, 100, 100, 800, 400,  lineData);
+		pc = new PieChart(this, pieX, pieY, pieRadius, pieRadius,  pieData);
+		lc = new LineChart(this, lineX, lineY, lineWidth, lineHeight,  lineData);
 		if(p != null) lc.setPointToExpandFrom(p);
 		showChart();
-		 
+		
+		Log.d("dimens", String.format("container dimens: width %s, height %s ", containerWidth, containerHeight));
+		Log.d("dimens", String.format("pieR %s, pieX %s, pieY %s",pieRadius, pieX, pieY));
+		Log.d("dimens", String.format("lineW %s, lineH %s, lineX %s, lineY %s", lineWidth, lineHeight, lineX, lineY));
 		((MainActivity)getActivity()).setData(myMap);
 	}
 
