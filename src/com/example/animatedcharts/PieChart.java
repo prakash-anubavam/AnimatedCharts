@@ -25,23 +25,23 @@ public class PieChart extends View implements OnTouchListener{
 	
 	private ArrayList<ArcView> arcs;
 	
-	int x; int y;
-	int width; int height;
+	int mX; int mY;
+	int mWidth; int mHeight;
 	PieChartDataset mData;
 	
 	Paint mLinePainter;
 	ArrayList<Point> mLineEndPoints;
 	
-	ChartFragment parent;
+	ChartFragment mParent;
 	Point mCenter;
 	
 	public PieChart(ChartFragment context, int x, int y, int width, int height, PieChartDataset data) {
 		super(context.getActivity());
-		this.width = width;
-		this.height = height;
-		this.x = x;
-		this.y = y;
-		this.parent = context;
+		this.mWidth = width;
+		this.mHeight = height;
+		this.mX = x;
+		this.mY = y;
+		this.mParent = context;
 		
 		mCenter = new Point(x + width/2, y + height/2);
 		mData = data;
@@ -84,7 +84,7 @@ public class PieChart extends View implements OnTouchListener{
 		for(PieChartDataItem data : dataItems){
 			int sweep = (int) Math.round(data.getPercentage() * 360);
 			
-			arcs.add(new ArcView(this, x, y, width, height, endOfLastArc, sweep, 0f, index));
+			arcs.add(new ArcView(this, mX, mY, mWidth, mHeight, endOfLastArc, sweep, 0f, index));
 			endOfLastArc = endOfLastArc + sweep;
 			index++;
 		}
@@ -136,7 +136,7 @@ public class PieChart extends View implements OnTouchListener{
 		
 		int arcIndex = whichArcIsThePointIn(new Point(eventY, eventX));
 		if(arcIndex >= 0){
-			parent.arcClicked(mData.getData().get(arcIndex).getIndex());
+			mParent.arcClicked(mData.getData().get(arcIndex).getIndex());
 		}
 		
 		return inflateArcIndex(arcIndex);
@@ -163,8 +163,8 @@ public class PieChart extends View implements OnTouchListener{
 	private int whichArcIsThePointIn(Point loc) {
 		int result = -1;
 		
-		Point center = new Point(y + height/2, x + width/2);
-		float radius = width * .75f;	//slight buffer outside
+		Point center = new Point(mY + mHeight/2, mX + mWidth/2);
+		float radius = mWidth * .75f;	//slight buffer outside
 		
 		int distance = getDistance(loc, center);
 		Log.d("touch", String.format("Center %s, TouchPoint %s, distance %s, radius %s",
